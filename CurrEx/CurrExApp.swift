@@ -7,11 +7,12 @@
 
 import SwiftUI
 
+// MARK: - Точка входу
 @main
-struct CurrExApp: App {
+struct ExchangeRatesApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ExchangeRatesView()
         }
     }
 }

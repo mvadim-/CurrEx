@@ -457,20 +457,3 @@ struct ErrorView: View {
         .padding()
     }
 }
-
-// MARK: - Точка входу
-@main
-struct ExchangeRatesApp: App {
-    var body: some Scene {
-        WindowGroup {
-            ExchangeRatesView()
-        }
-    }
-}
-// Додаємо для сумісності з шаблоном за замовчуванням
-struct ContentView: View {
-    var body: some View {
-        ExchangeRatesView()
-    }
-}
-
