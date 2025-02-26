@@ -467,3 +467,10 @@ struct ExchangeRatesApp: App {
         }
     }
 }
+// Додаємо для сумісності з шаблоном за замовчуванням
+struct ContentView: View {
+    var body: some View {
+        ExchangeRatesView()
+    }
+}
+
