@@ -7,12 +7,12 @@
 
 import SwiftUI
 
-// MARK: - Точка входу
+// MARK: - Точка входу в додаток
 @main
-struct ExchangeRatesApp: App {
+struct ExchangeRateApp: App {
     var body: some Scene {
         WindowGroup {
-            ExchangeRatesView()
+            ExchangeRateView()
         }
     }
 }

@@ -1,459 +1,560 @@
 import SwiftUI
-import Foundation
-import Combine
+import Charts
 
 // MARK: - Моделі даних
-struct ExchangeRate: Codable, Identifiable {
-    var id = UUID()
-    let baseCurrency: String
-    let currency: String
-    let rateBuy: String
-    let rateSell: String
-    
-    enum CodingKeys: String, CodingKey {
-        case baseCurrency = "base_currency"
-        case currency
-        case rateBuy = "rate_buy"
-        case rateSell = "rate_sell"
-    }
-}
-
-struct ExchangeRatesResponse: Codable {
-    let bestobmin: [ExchangeRate]
-    let privatBank: [ExchangeRate]
-    let raiffeisen: [ExchangeRate]
+struct ExchangeRateResponse: Codable {
+    let Bestobmin: [BankRate]
+    let PrivatBank: [BankRate]
+    let Raiffeisen: [BankRate]
     let timestamp: String
     
     enum CodingKeys: String, CodingKey {
-        case bestobmin = "Bestobmin"
-        case privatBank = "PrivatBank"
-        case raiffeisen = "Raiffeisen"
+        case Bestobmin
+        case PrivatBank
+        case Raiffeisen
         case timestamp
     }
 }
 
-struct BankRate: Identifiable {
-    var id = UUID()
-    let bank: String
-    let buyRate: Double
-    let sellRate: Double
-    var buyColor: Color {
-        isBestBuy ? .green : .primary
-    }
-    var sellColor: Color {
-        isBestSell ? .green : .primary
-    }
-    var isBestBuy: Bool = false
-    var isBestSell: Bool = false
+struct BankRate: Codable {
+    let base_currency: String
+    let currency: String
+    let rate_buy: String
+    let rate_sell: String
 }
 
-// MARK: - ViewModel
-class ExchangeRatesViewModel: ObservableObject {
-    @Published var bankRates: [BankRate] = []
-    @Published var isLoading = false
-    @Published var errorMessage: String?
-    @Published var lastUpdated: String = ""
+// MARK: - Моделі представлення
+struct BankRateViewModel: Identifiable {
+    let id = UUID()
+    let name: String
+    let buyRate: Double
+    let sellRate: Double
     
-    func fetchExchangeRates(currency: String) {
-        isLoading = true
-        errorMessage = nil
-        
+    var spread: Double {
+        return sellRate - buyRate
+    }
+}
+
+// MARK: - API сервіс
+class ExchangeRatesService {
+    // Замініть credentialsString на ваш логін і пароль у форматі "username:password"
+    private let credentialsString = "user:sWgYRGiRV2e70wA"
+    
+    func fetchExchangeRates(for currency: String) async throws -> [BankRateViewModel] {
         guard let url = URL(string: "https://mvadim.pythonanywhere.com/api/exchange_rates?currency=\(currency)") else {
-            errorMessage = "Невірний URL"
-            isLoading = false
-            return
+            throw URLError(.badURL)
         }
         
         var request = URLRequest(url: url)
         
         // Додаємо Basic Auth
-        // Замініть "username:password" на ваші дані для авторизації
-        let authString = "username:password"
-        if let authData = authString.data(using: .utf8) {
-            let base64Auth = authData.base64EncodedString()
-            request.addValue("Basic \(base64Auth)", forHTTPHeaderField: "Authorization")
+        if let data = credentialsString.data(using: .utf8) {
+            let base64String = data.base64EncodedString()
+            request.addValue("Basic \(base64String)", forHTTPHeaderField: "Authorization")
         }
         
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            DispatchQueue.main.async {
-                self?.isLoading = false
-                
-                if let error = error {
-                    self?.errorMessage = "Помилка: \(error.localizedDescription)"
-                    return
-                }
-                
-                guard let data = data else {
-                    self?.errorMessage = "Немає даних"
-                    return
-                }
-                
-                do {
-                    let decoder = JSONDecoder()
-                    let response = try decoder.decode(ExchangeRatesResponse.self, from: data)
-                    
-                    // Форматування часу
-                    if let date = ISO8601DateFormatter().date(from: response.timestamp) {
-                        let formatter = DateFormatter()
-                        formatter.dateStyle = .medium
-                        formatter.timeStyle = .short
-                        formatter.locale = Locale(identifier: "uk_UA")
-                        self?.lastUpdated = formatter.string(from: date)
-                    } else {
-                        self?.lastUpdated = response.timestamp
-                    }
-                    
-                    // Підготовка даних для відображення
-                    var rates = [
-                        BankRate(
-                            bank: "Bestobmin",
-                            buyRate: Double(response.bestobmin[0].rateBuy) ?? 0,
-                            sellRate: Double(response.bestobmin[0].rateSell) ?? 0
-                        ),
-                        BankRate(
-                            bank: "ПриватБанк",
-                            buyRate: Double(response.privatBank[0].rateBuy) ?? 0,
-                            sellRate: Double(response.privatBank[0].rateSell) ?? 0
-                        ),
-                        BankRate(
-                            bank: "Райффайзен",
-                            buyRate: Double(response.raiffeisen[0].rateBuy) ?? 0,
-                            sellRate: Double(response.raiffeisen[0].rateSell) ?? 0
-                        )
-                    ]
-                    
-                    // Визначення найкращих курсів
-                    if let bestBuyRate = rates.min(by: { $0.buyRate < $1.buyRate }) {
-                        for i in 0..<rates.count {
-                            if rates[i].buyRate == bestBuyRate.buyRate {
-                                rates[i].isBestBuy = true
-                            }
-                        }
-                    }
-                    
-                    if let bestSellRate = rates.max(by: { $0.sellRate < $1.sellRate }) {
-                        for i in 0..<rates.count {
-                            if rates[i].sellRate == bestSellRate.sellRate {
-                                rates[i].isBestSell = true
-                            }
-                        }
-                    }
-                    
-                    self?.bankRates = rates
-                } catch {
-                    self?.errorMessage = "Помилка розбору даних: \(error.localizedDescription)"
-                }
-            }
-        }.resume()
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let response = try JSONDecoder().decode(ExchangeRateResponse.self, from: data)
+        
+        // Перетворення даних у формат ViewModel
+        var results: [BankRateViewModel] = []
+        
+        if let rate = response.Bestobmin.first {
+            // Використовуємо NumberFormatter для правильного перетворення і округлення
+            let buyRate = parseAndRound(rate.rate_buy)
+            let sellRate = parseAndRound(rate.rate_sell)
+            
+            results.append(BankRateViewModel(
+                name: "Bestobmin",
+                buyRate: buyRate,
+                sellRate: sellRate
+            ))
+        }
+        
+        if let rate = response.PrivatBank.first {
+            let buyRate = parseAndRound(rate.rate_buy)
+            let sellRate = parseAndRound(rate.rate_sell)
+            
+            results.append(BankRateViewModel(
+                name: "PrivatBank",
+                buyRate: buyRate,
+                sellRate: sellRate
+            ))
+        }
+        
+        if let rate = response.Raiffeisen.first {
+            let buyRate = parseAndRound(rate.rate_buy)
+            let sellRate = parseAndRound(rate.rate_sell)
+            
+            results.append(BankRateViewModel(
+                name: "Raiffeisen",
+                buyRate: buyRate,
+                sellRate: sellRate
+            ))
+        }
+        
+        return results
+    }
+    
+    // Допоміжна функція для парсингу та округлення значень
+    private func parseAndRound(_ value: String) -> Double {
+        guard let doubleValue = Double(value) else { return 0.0 }
+        // Округлюємо до 2 десяткових знаків
+        return round(doubleValue * 1000) / 1000
     }
 }
 
-// MARK: - Views
-struct ExchangeRatesView: View {
-    @StateObject private var viewModel = ExchangeRatesViewModel()
-    @State private var selectedCurrency = "USD"
+// MARK: - Головний екран
+struct ExchangeRateView: View {
+    @State private var rates: [BankRateViewModel] = []
+    @State private var isLoading = true
+    @State private var errorMessage: String? = nil
+    @State private var lastUpdated: String = ""
+    @State private var selectedCurrency: String = "USD"
+    
+    private let service = ExchangeRatesService()
     
     var body: some View {
         NavigationView {
-            VStack {
-                // Секція селектора валюти (заготовка для майбутнього розширення)
-                Picker("Валюта", selection: $selectedCurrency) {
-                    Text("USD").tag("USD")
-                    Text("EUR").tag("EUR")
-                }
-                .pickerStyle(SegmentedPickerStyle())
-                .padding()
-                .onChange(of: selectedCurrency) { oldValue, newValue in
-                    viewModel.fetchExchangeRates(currency: selectedCurrency)
-                }
+            ZStack {
+                Color(UIColor.systemGray6).edgesIgnoringSafeArea(.all)
                 
-                if viewModel.isLoading {
-                    ProgressView("Завантаження...")
-                        .padding()
-                } else if let errorMessage = viewModel.errorMessage {
-                    ErrorView(errorMessage: errorMessage, retryAction: {
-                        viewModel.fetchExchangeRates(currency: selectedCurrency)
-                    })
-                } else if viewModel.bankRates.isEmpty {
-                    Text("Немає даних")
-                        .padding()
+                if isLoading {
+                    loadingView
+                } else if let error = errorMessage {
+                    errorView(message: error)
                 } else {
-                    // Головна секція з курсами валют
-                    RatesView(bankRates: viewModel.bankRates)
-                    
-                    // Графічне порівняння
-                    ComparisonChartView(bankRates: viewModel.bankRates)
-                    
-                    Spacer()
-                    
-                    // Інформація про останнє оновлення
-                    if !viewModel.lastUpdated.isEmpty {
-                        Text("Останнє оновлення: \(viewModel.lastUpdated)")
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                            .padding(.bottom, 8)
-                    }
+                    mainContentView
                 }
             }
-            .navigationTitle("Курс валют")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        viewModel.fetchExchangeRates(currency: selectedCurrency)
-                    }) {
-                        Image(systemName: "arrow.clockwise")
-                    }
-                }
-            }
-            .onAppear {
-                viewModel.fetchExchangeRates(currency: selectedCurrency)
+            .navigationTitle("Курс валют в Україні")
+        }
+        .onAppear {
+            loadData()
+        }
+    }
+    
+    // MARK: - Завантаження даних
+    private func loadData() {
+        isLoading = true
+        errorMessage = nil
+        
+        Task {
+            do {
+                rates = try await service.fetchExchangeRates(for: selectedCurrency)
+                lastUpdated = formatCurrentTime()
+                isLoading = false
+            } catch {
+                errorMessage = "Помилка завантаження даних: \(error.localizedDescription)"
+                isLoading = false
             }
         }
     }
-}
-
-struct RatesView: View {
-    let bankRates: [BankRate]
     
-    var body: some View {
-        VStack(alignment: .leading) {
-            Text("USD / UAH")
+    private func formatCurrentTime() -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        formatter.locale = Locale(identifier: "uk_UA")
+        return formatter.string(from: Date())
+    }
+    
+    // MARK: - Допоміжні функції
+    private func findBestRates() -> (buy: BankRateViewModel?, sell: BankRateViewModel?) {
+        guard let firstRate = rates.first else { return (nil, nil) }
+        
+        var bestBuy = firstRate
+        var bestSell = firstRate
+        
+        for rate in rates {
+            if rate.buyRate > bestBuy.buyRate {
+                bestBuy = rate
+            }
+            if rate.sellRate < bestSell.sellRate {
+                bestSell = rate
+            }
+        }
+        
+        return (bestBuy, bestSell)
+    }
+    
+    // MARK: - Підвиди інтерфейсу
+    private var loadingView: some View {
+        VStack {
+            ProgressView()
+                .scaleEffect(1.5)
+            
+            Text("Завантаження курсів валют...")
                 .font(.headline)
+                .foregroundColor(.gray)
+                .padding(.top, 16)
+        }
+    }
+    
+    private func errorView(message: String) -> some View {
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 50))
+                .foregroundColor(.red)
+            
+            Text("Помилка")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.red)
+            
+            Text(message)
+                .font(.body)
+                .multilineTextAlignment(.center)
                 .padding(.horizontal)
             
-            // Заголовок таблиці
-            HStack {
-                Text("Банк")
-                    .fontWeight(.bold)
-                    .frame(width: 120, alignment: .leading)
-                
-                Spacer()
-                
-                Text("Купівля")
-                    .fontWeight(.bold)
-                    .frame(width: 80, alignment: .trailing)
-                
-                Spacer()
-                
-                Text("Продаж")
-                    .fontWeight(.bold)
-                    .frame(width: 80, alignment: .trailing)
+            Button(action: loadData) {
+                Text("Спробувати знову")
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 24)
+                    .background(Color.blue)
+                    .cornerRadius(10)
             }
-            .padding(.horizontal)
-            .padding(.bottom, 5)
+        }
+        .padding()
+    }
+    
+    private var mainContentView: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                currencySelector
+                
+                lastUpdatedView
+                
+                bestRatesView
+                
+                chartView
+                
+                detailedInfoView
+                
+                disclaimerView
+            }
+            .padding()
+        }
+    }
+    
+    private var currencySelector: some View {
+        HStack {
+            Text("Валюта:")
+                .font(.headline)
             
-            // Список курсів
-            ScrollView {
-                VStack(spacing: 15) {
-                    ForEach(bankRates) { rate in
-                        BankRateRow(rate: rate)
+            Picker("Валюта", selection: $selectedCurrency) {
+                Text("USD").tag("USD")
+                Text("EUR").tag("EUR")
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            .onChange(of: selectedCurrency) { _ in
+                loadData()
+            }
+        }
+        .padding(.vertical, 8)
+    }
+    
+    private var lastUpdatedView: some View {
+        HStack {
+            Spacer()
+            Text("Оновлено: \(lastUpdated)")
+                .font(.caption)
+                .foregroundColor(.gray)
+        }
+    }
+    
+    private var bestRatesView: some View {
+        let bestRates = findBestRates()
+        
+        return VStack(alignment: .leading, spacing: 12) {
+            Text("Найкращі курси")
+                .font(.headline)
+                .fontWeight(.semibold)
+            
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Найвигідніше продати у")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
+                    if let bestBuy = bestRates.buy {
+                        Text("\(bestBuy.name): \(String(format: "%.2f", bestBuy.buyRate)) ₴")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundColor(.green)
                     }
                 }
-                .padding(.horizontal)
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.green.opacity(0.1))
+                .cornerRadius(10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.green.opacity(0.3), lineWidth: 1)
+                )
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Найвигідніше купити у")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
+                    if let bestSell = bestRates.sell {
+                        Text("\(bestSell.name): \(String(format: "%.2f", bestSell.sellRate)) ₴")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .foregroundColor(.blue)
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.blue.opacity(0.1))
+                .cornerRadius(10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                )
             }
         }
-        .padding(.vertical)
-        .background(Color(UIColor.secondarySystemBackground))
+        .padding()
+        .background(Color.white)
         .cornerRadius(12)
-        .padding(.horizontal)
-    }
-}
-
-struct BankRateRow: View {
-    let rate: BankRate
-    
-    var body: some View {
-        HStack {
-            Text(rate.bank)
-                .frame(width: 120, alignment: .leading)
-            
-            Spacer()
-            
-            Text(String(format: "%.2f", rate.buyRate))
-                .fontWeight(rate.isBestBuy ? .bold : .regular)
-                .foregroundColor(rate.buyColor)
-                .frame(width: 80, alignment: .trailing)
-            
-            Spacer()
-            
-            Text(String(format: "%.2f", rate.sellRate))
-                .fontWeight(rate.isBestSell ? .bold : .regular)
-                .foregroundColor(rate.sellColor)
-                .frame(width: 80, alignment: .trailing)
-        }
-        .padding(10)
-        .background(Color(UIColor.systemBackground))
-        .cornerRadius(8)
-    }
-}
-
-struct ComparisonChartView: View {
-    let bankRates: [BankRate]
-    
-    // Знайти мінімальні та максимальні значення для масштабування графіка
-    private var minRate: Double {
-        let minBuy = bankRates.map { $0.buyRate }.min() ?? 0
-        let minSell = bankRates.map { $0.sellRate }.min() ?? 0
-        return min(minBuy, minSell) * 0.99 // Додаємо небольшой отступ
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
     
-    private var maxRate: Double {
-        let maxBuy = bankRates.map { $0.buyRate }.max() ?? 0
-        let maxSell = bankRates.map { $0.sellRate }.max() ?? 0
-        return max(maxBuy, maxSell) * 1.01 // Додаємо небольшой отступ
-    }
-    
-    private var range: Double {
-        return maxRate - minRate
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading) {
+    // Якщо ви використовуєте iOS 16+, також покращимо нативні Charts
+    private var chartView: some View {
+        VStack(alignment: .leading, spacing: 12) {
             Text("Порівняння курсів")
                 .font(.headline)
-                .padding(.horizontal)
-                .padding(.top)
+                .fontWeight(.semibold)
             
-            // Висота графіка
-            let height: CGFloat = 150
-            
-            ZStack(alignment: .bottom) {
-                // Вертикальні лінії сітки
-                HStack(spacing: 0) {
-                    ForEach(0..<5) { i in
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.2))
-                            .frame(width: 1, height: height)
-                            .padding(.horizontal)
-                    }
-                }
-                
-                // Горизонтальні лінії сітки
-                VStack(spacing: 0) {
-                    ForEach(0..<4) { i in
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.2))
-                            .frame(width: UIScreen.main.bounds.width - 40, height: 1)
-                            .padding(.vertical, height / 3)
-                    }
-                }
-                
-                // Графік
-                VStack(spacing: 20) {
-                    // Курс купівлі
-                    HStack(alignment: .bottom, spacing: 30) {
-                        ForEach(bankRates) { rate in
-                            VStack {
-                                let barHeight = calculateBarHeight(rate: rate.buyRate, height: height)
-                                Rectangle()
-                                    .fill(rate.isBestBuy ? Color.green : Color.blue)
-                                    .frame(width: 30, height: barHeight)
-                                    .cornerRadius(5)
-                                
-                                Text(rate.bank)
-                                    .font(.caption)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                    .frame(width: 80)
-                                    .multilineTextAlignment(.center)
-                            }
+            // На iOS 16+ використовуємо нативні Charts
+            if #available(iOS 16.0, *) {
+                Chart {
+                    ForEach(rates) { rate in
+                        BarMark(
+                            x: .value("Банк", rate.name),
+                            y: .value("Курс", rate.buyRate)
+                        )
+                        .foregroundStyle(Color.green)
+                        .position(by: .value("Тип", "Купівля"), axis: .horizontal)
+                        .annotation(position: .top) {
+                            Text(String(format: "%.2f", rate.buyRate))
+                                .font(.caption2)
+                                .foregroundColor(.black)
+                        }
+
+                        BarMark(
+                            x: .value("Банк", rate.name),
+                            y: .value("Курс", rate.sellRate)
+                        )
+                        .foregroundStyle(Color.blue)
+                        .position(by: .value("Тип", "Продаж"), axis: .horizontal)
+                        .annotation(position: .top) {
+                            Text(String(format: "%.2f", rate.sellRate))
+                                .font(.caption2)
+                                .foregroundColor(.black)
                         }
                     }
-                    
-                    // Курс продажу
-                    HStack(alignment: .bottom, spacing: 30) {
-                        ForEach(bankRates) { rate in
-                            VStack {
-                                let barHeight = calculateBarHeight(rate: rate.sellRate, height: height)
-                                Rectangle()
-                                    .fill(rate.isBestSell ? Color.green : Color.orange)
-                                    .frame(width: 30, height: barHeight)
-                                    .cornerRadius(5)
-                                
-                                Text(rate.bank)
-                                    .font(.caption)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                    .frame(width: 80)
-                                    .multilineTextAlignment(.center)
+                }
+                .chartPlotStyle { plotArea in
+                    // Відступ знизу для уникнення перекриття підписів
+                    plotArea
+                        .padding(.bottom, 30)
+                }
+                .chartXAxis {
+                    AxisMarks { value in
+                        AxisValueLabel {
+                            if let label = value.as(String.self) {
+                                Text(label)
+                                    .rotationEffect(.degrees(-90))  // Обертання на -90градусів
+                                    .offset(x: 0, y: 8)              // Зсув підпису
                             }
                         }
+                        AxisTick()
+                        AxisGridLine()
+                    }
+                }
+                .frame(height: 250)
+                .chartYScale(domain: getChartYDomain())
+                .chartLegend(position: .top, alignment: .center)
+                
+            }
+                else {
+                // Для iOS 15 альтернативні графіки
+                alternativeChartView
+            }
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+    }
+
+    // Покращена функція для визначення меж графіка
+    private func getChartYDomain() -> ClosedRange<Double> {
+        guard !rates.isEmpty else { return 0...50 }
+        
+        let minValue = (rates.map { $0.buyRate }.min() ?? 0) * 0.99 // Додаємо невеликий запас знизу (2%)
+        let maxValue = (rates.map { $0.sellRate }.max() ?? 50) * 1.01 // Додаємо невеликий запас зверху (2%)
+        
+        return minValue...maxValue
+    }
+
+    
+    // Альтернативне відображення графіка для iOS 15 та нижче
+    private var alternativeChartView: some View {
+        VStack(spacing: 16) {
+            Text("Курси в графічному вигляді доступні в iOS 16+")
+                .font(.caption)
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+            
+            // Візуалізація через стовпчики
+            HStack(alignment: .bottom, spacing: 12) {
+                ForEach(rates) { rate in
+                    VStack(spacing: 4) {
+                        // Стовпчик продажу
+                        VStack {
+                            Spacer()
+                            Text(String(format: "%.2f", rate.sellRate))
+                                .font(.caption2)
+                                .foregroundColor(.white)
+                                .rotationEffect(.degrees(-90))
+                                .padding(.vertical, 2)
+                        }
+                        .frame(width: 30, height: CGFloat(rate.sellRate * 5))
+                        .background(Color.blue)
+                        .cornerRadius(4)
+                        
+                        // Стовпчик купівлі
+                        VStack {
+                            Spacer()
+                            Text(String(format: "%.2f", rate.buyRate))
+                                .font(.caption2)
+                                .foregroundColor(.white)
+                                .rotationEffect(.degrees(-90))
+                                .padding(.vertical, 2)
+                        }
+                        .frame(width: 30, height: CGFloat(rate.buyRate * 5))
+                        .background(Color.green)
+                        .cornerRadius(4)
+                        
+                        // Назва банку
+                        Text(rate.name)
+                            .font(.caption)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .multilineTextAlignment(.center)
+                            .frame(width: 70)
                     }
                 }
             }
+            .frame(height: 250)
             
             // Легенда
-            HStack {
-                HStack {
+            HStack(spacing: 16) {
+                HStack(spacing: 8) {
                     Rectangle()
-                        .fill(Color.blue)
-                        .frame(width: 15, height: 15)
-                    
+                        .fill(Color.green)
+                        .frame(width: 12, height: 12)
                     Text("Купівля")
                         .font(.caption)
                 }
                 
-                Spacer()
-                
-                HStack {
+                HStack(spacing: 8) {
                     Rectangle()
-                        .fill(Color.orange)
-                        .frame(width: 15, height: 15)
-                    
+                        .fill(Color.blue)
+                        .frame(width: 12, height: 12)
                     Text("Продаж")
                         .font(.caption)
                 }
-                
-                Spacer()
-                
-                HStack {
-                    Rectangle()
-                        .fill(Color.green)
-                        .frame(width: 15, height: 15)
-                    
-                    Text("Найкращий курс")
-                        .font(.caption)
-                }
             }
-            .padding()
         }
-        .padding(.bottom)
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(12)
-        .padding()
     }
     
-    private func calculateBarHeight(rate: Double, height: CGFloat) -> CGFloat {
-        if range == 0 { return height * 0.5 }
-        let normalized = (rate - minRate) / range
-        return CGFloat(normalized) * height * 0.8 + height * 0.2
+    private var detailedInfoView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Детальна інформація")
+                .font(.headline)
+                .fontWeight(.semibold)
+            
+            VStack(spacing: 0) {
+                // Заголовок таблиці
+                HStack {
+                    Text("Банк")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    Text("Купівля")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .frame(width: 70, alignment: .trailing)
+                    
+                    Text("Продаж")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .frame(width: 70, alignment: .trailing)
+                    
+                    Text("Спред")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .frame(width: 70, alignment: .trailing)
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal)
+                .background(Color(UIColor.systemGray5))
+                
+                // Рядки таблиці
+                ForEach(rates) { rate in
+                    HStack {
+                        Text(rate.name)
+                            .font(.subheadline)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        Text(String(format: "%.2f", rate.buyRate))
+                            .font(.subheadline)
+                            .frame(width: 70, alignment: .trailing)
+                        
+                        Text(String(format: "%.2f", rate.sellRate))
+                            .font(.subheadline)
+                            .frame(width: 70, alignment: .trailing)
+                        
+                        Text(String(format: "%.2f", rate.spread))
+                            .font(.subheadline)
+                            .frame(width: 70, alignment: .trailing)
+                    }
+                    .padding(.vertical, 10)
+                    .padding(.horizontal)
+                    .background(Color.white)
+                    .overlay(
+                        Divider()
+                            .background(Color(UIColor.systemGray4))
+                            .offset(y: 20),
+                        alignment: .bottom
+                    )
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color(UIColor.systemGray4), lineWidth: 1)
+            )
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+    }
+    
+    private var disclaimerView: some View {
+        Text("Дані курсів валют надаються лише в інформаційних цілях та можуть відрізнятися від актуальних значень.")
+            .font(.caption)
+            .foregroundColor(.gray)
+            .multilineTextAlignment(.center)
+            .padding(.vertical)
     }
 }
 
-struct ErrorView: View {
-    let errorMessage: String
-    let retryAction: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.largeTitle)
-                .foregroundColor(.red)
-            
-            Text("Помилка")
-                .font(.headline)
-            
-            Text(errorMessage)
-                .multilineTextAlignment(.center)
-                .padding()
-            
-            Button(action: retryAction) {
-                Text("Спробувати знову")
-                    .fontWeight(.bold)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-            }
-        }
-        .padding()
-    }
-}

@@ -29,9 +29,22 @@
 		746254032D6FA6E800C6703F /* CurrExUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CurrExUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		741FE2892D704A9000813845 /* Exceptions for "CurrEx" folder in "CurrEx" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 746253E72D6FA6E600C6703F /* CurrEx */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		746253EA2D6FA6E600C6703F /* CurrEx */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				741FE2892D704A9000813845 /* Exceptions for "CurrEx" folder in "CurrEx" target */,
+			);
 			path = CurrEx;
 			sourceTree = "<group>";
 		};
@@ -398,7 +411,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = CurrExSJ;
+				INFOPLIST_FILE = CurrEx/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CurrEx;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -445,7 +459,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = CurrExSJ;
+				INFOPLIST_FILE = CurrEx/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CurrEx;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
