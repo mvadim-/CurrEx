@@ -1,0 +1,16 @@
+# Build artifacts
+build/
+
+# User-specific Xcode settings
+*.xcuserstate
+*.xccheckout
+
+# Xcode derived data (if not using the default location)
+DerivedData/
+
+# Sensitive configuration files
+Secrets.xcconfig
+Secrets.plist
+
+# Other temporary files
+*.swp
