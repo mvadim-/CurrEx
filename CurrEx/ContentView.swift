@@ -1,19 +1,12 @@
 import SwiftUI
 import Charts
 
-// MARK: - Моделі даних
+// MARK: - Data Models
 struct ExchangeRateResponse: Codable {
     let Bestobmin: [BankRate]
     let PrivatBank: [BankRate]
     let Raiffeisen: [BankRate]
     let timestamp: String
-    
-    enum CodingKeys: String, CodingKey {
-        case Bestobmin
-        case PrivatBank
-        case Raiffeisen
-        case timestamp
-    }
 }
 
 struct BankRate: Codable {
@@ -23,7 +16,7 @@ struct BankRate: Codable {
     let rate_sell: String
 }
 
-// MARK: - Моделі представлення
+// MARK: - View Models
 struct BankRateViewModel: Identifiable {
     let id = UUID()
     let name: String
@@ -35,111 +28,127 @@ struct BankRateViewModel: Identifiable {
     }
 }
 
-// MARK: - API сервіс
+// MARK: - API Service
 class ExchangeRatesService {
-    // Замініть credentialsString на ваш логін і пароль у форматі "username:password"
-    private let credentialsString = "user:sWgYRGiRV2e70wA"
+    private let credentialsString: String
+    private let baseURL: String
+    private let cache = NSCache<NSString, CachedRates>()
+    private let cacheExpirationTime: TimeInterval = 300 // 5 minutes
+    
+    
+    // Cache class to store rates with timestamp
+    final class CachedRates {
+        let rates: [BankRateViewModel]
+        let timestamp: Date
+        
+        init(rates: [BankRateViewModel], timestamp: Date = Date()) {
+            self.rates = rates
+            self.timestamp = timestamp
+        }
+        
+        var isValid: Bool {
+            return Date().timeIntervalSince(timestamp) < 300 // 5 minutes
+        }
+    }
+    
+    init() {
+        guard let infoDict = Bundle.main.infoDictionary,
+              let credentials = infoDict["CredentialsString"] as? String,
+              let url = infoDict["BaseURL"] as? String else {
+            fatalError("Missing configuration in Info.plist")
+        }
+        
+        self.credentialsString = credentials
+        self.baseURL = url.replacingOccurrences(of: "___", with: "://")
+    }
     
     func fetchExchangeRates(for currency: String) async throws -> [BankRateViewModel] {
-        guard let url = URL(string: "https://mvadim.pythonanywhere.com/api/exchange_rates?currency=\(currency)") else {
+        // Check cache first
+        let cacheKey = NSString(string: currency)
+        if let cachedData = cache.object(forKey: cacheKey), cachedData.isValid {
+            return cachedData.rates
+        }
+        
+        // Prepare URL request
+        guard let url = URL(string: "\(baseURL)?currency=\(currency)") else {
             throw URLError(.badURL)
         }
         
         var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         
-        // Додаємо Basic Auth
+        // Add Basic Auth
         if let data = credentialsString.data(using: .utf8) {
             let base64String = data.base64EncodedString()
             request.addValue("Basic \(base64String)", forHTTPHeaderField: "Authorization")
         }
         
+        // Make network request using async/await
         let (data, _) = try await URLSession.shared.data(for: request)
         let response = try JSONDecoder().decode(ExchangeRateResponse.self, from: data)
         
-        // Перетворення даних у формат ViewModel
+        // Transform data to view model format more efficiently
         var results: [BankRateViewModel] = []
+        results.reserveCapacity(3) // Pre-allocate capacity for performance
         
-        if let rate = response.Bestobmin.first {
-            // Використовуємо NumberFormatter для правильного перетворення і округлення
-            let buyRate = parseAndRound(rate.rate_buy)
-            let sellRate = parseAndRound(rate.rate_sell)
-            
-            results.append(BankRateViewModel(
-                name: "Bestobmin",
-                buyRate: buyRate,
-                sellRate: sellRate
-            ))
+        // Process each bank data
+        let banks = [
+            ("Bestobmin", response.Bestobmin.first),
+            ("PrivatBank", response.PrivatBank.first),
+            ("Raiffeisen", response.Raiffeisen.first)
+        ]
+        
+        for (name, rateData) in banks {
+            if let rate = rateData {
+                let buyRate = parseAndRound(rate.rate_buy)
+                let sellRate = parseAndRound(rate.rate_sell)
+                
+                results.append(BankRateViewModel(
+                    name: name,
+                    buyRate: buyRate,
+                    sellRate: sellRate
+                ))
+            }
         }
         
-        if let rate = response.PrivatBank.first {
-            let buyRate = parseAndRound(rate.rate_buy)
-            let sellRate = parseAndRound(rate.rate_sell)
-            
-            results.append(BankRateViewModel(
-                name: "PrivatBank",
-                buyRate: buyRate,
-                sellRate: sellRate
-            ))
-        }
-        
-        if let rate = response.Raiffeisen.first {
-            let buyRate = parseAndRound(rate.rate_buy)
-            let sellRate = parseAndRound(rate.rate_sell)
-            
-            results.append(BankRateViewModel(
-                name: "Raiffeisen",
-                buyRate: buyRate,
-                sellRate: sellRate
-            ))
-        }
+        // Store in cache
+        let cachedData = CachedRates(rates: results)
+        cache.setObject(cachedData, forKey: cacheKey)
         
         return results
     }
     
-    // Допоміжна функція для парсингу та округлення значень
+    // Helper function for parsing and rounding values
     private func parseAndRound(_ value: String) -> Double {
         guard let doubleValue = Double(value) else { return 0.0 }
-        // Округлюємо до 2 десяткових знаків
         return round(doubleValue * 1000) / 1000
     }
 }
 
-// MARK: - Головний екран
-struct ExchangeRateView: View {
-    @State private var rates: [BankRateViewModel] = []
-    @State private var isLoading = true
-    @State private var errorMessage: String? = nil
-    @State private var lastUpdated: String = ""
-    @State private var selectedCurrency: String = "USD"
+// MARK: - Main Content View Model
+class ExchangeRateViewModel: ObservableObject {
+    @Published var rates: [BankRateViewModel] = []
+    @Published var isLoading = true
+    @Published var errorMessage: String? = nil
+    @Published var lastUpdated: String = ""
+    @Published var selectedCurrency: String = "USD"
     
     private let service = ExchangeRatesService()
+    private let dateFormatter: DateFormatter
     
-    var body: some View {
-        NavigationView {
-            ZStack {
-                Color(UIColor.systemGray6).edgesIgnoringSafeArea(.all)
-                
-                if isLoading {
-                    loadingView
-                } else if let error = errorMessage {
-                    errorView(message: error)
-                } else {
-                    mainContentView
-                }
-            }
-            .navigationTitle("Курс валют в Україні")
-        }
-        .onAppear {
-            loadData()
-        }
+    init() {
+        // Initialize date formatter once
+        dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .medium
+        dateFormatter.timeStyle = .short
+        dateFormatter.locale = Locale(identifier: "uk_UA")
     }
     
-    // MARK: - Завантаження даних
-    private func loadData() {
+    func loadData() {
         isLoading = true
         errorMessage = nil
         
-        Task {
+        Task { @MainActor in
             do {
                 rates = try await service.fetchExchangeRates(for: selectedCurrency)
                 lastUpdated = formatCurrentTime()
@@ -152,15 +161,10 @@ struct ExchangeRateView: View {
     }
     
     private func formatCurrentTime() -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        formatter.locale = Locale(identifier: "uk_UA")
-        return formatter.string(from: Date())
+        return dateFormatter.string(from: Date())
     }
     
-    // MARK: - Допоміжні функції
-    private func findBestRates() -> (buy: BankRateViewModel?, sell: BankRateViewModel?) {
+    func findBestRates() -> (buy: BankRateViewModel?, sell: BankRateViewModel?) {
         guard let firstRate = rates.first else { return (nil, nil) }
         
         var bestBuy = firstRate
@@ -178,7 +182,41 @@ struct ExchangeRateView: View {
         return (bestBuy, bestSell)
     }
     
-    // MARK: - Підвиди інтерфейсу
+    func getChartYDomain() -> ClosedRange<Double> {
+        guard !rates.isEmpty else { return 0...50 }
+        
+        let minValue = (rates.map { $0.buyRate }.min() ?? 0) * 0.99
+        let maxValue = (rates.map { $0.sellRate }.max() ?? 50) * 1.01
+        
+        return minValue...maxValue
+    }
+}
+
+// MARK: - Main View
+struct ExchangeRateView: View {
+    @StateObject private var viewModel = ExchangeRateViewModel()
+    
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color(UIColor.systemGray6).edgesIgnoringSafeArea(.all)
+                
+                if viewModel.isLoading {
+                    loadingView
+                } else if let error = viewModel.errorMessage {
+                    errorView(message: error)
+                } else {
+                    mainContentView
+                }
+            }
+            .navigationTitle("Курс валют в Україні")
+        }
+        .onAppear {
+            viewModel.loadData()
+        }
+    }
+    
+    // MARK: - Subviews
     private var loadingView: some View {
         VStack {
             ProgressView()
@@ -207,7 +245,7 @@ struct ExchangeRateView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
             
-            Button(action: loadData) {
+            Button(action: viewModel.loadData) {
                 Text("Спробувати знову")
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
@@ -222,7 +260,7 @@ struct ExchangeRateView: View {
     
     private var mainContentView: some View {
         ScrollView {
-            VStack(spacing: 16) {
+            LazyVStack(spacing: 16) {
                 currencySelector
                 
                 lastUpdatedView
@@ -244,13 +282,13 @@ struct ExchangeRateView: View {
             Text("Валюта:")
                 .font(.headline)
             
-            Picker("Валюта", selection: $selectedCurrency) {
+            Picker("Валюта", selection: $viewModel.selectedCurrency) {
                 Text("USD").tag("USD")
                 Text("EUR").tag("EUR")
             }
             .pickerStyle(SegmentedPickerStyle())
-            .onChange(of: selectedCurrency) { _ in
-                loadData()
+            .onChange(of: viewModel.selectedCurrency) { oldValue, newValue in
+                viewModel.loadData()
             }
         }
         .padding(.vertical, 8)
@@ -259,14 +297,14 @@ struct ExchangeRateView: View {
     private var lastUpdatedView: some View {
         HStack {
             Spacer()
-            Text("Оновлено: \(lastUpdated)")
+            Text("Оновлено: \(viewModel.lastUpdated)")
                 .font(.caption)
                 .foregroundColor(.gray)
         }
     }
     
     private var bestRatesView: some View {
-        let bestRates = findBestRates()
+        let bestRates = viewModel.findBestRates()
         
         return VStack(alignment: .leading, spacing: 12) {
             Text("Найкращі курси")
@@ -323,17 +361,15 @@ struct ExchangeRateView: View {
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
     
-    // Якщо ви використовуєте iOS 16+, також покращимо нативні Charts
     private var chartView: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Порівняння курсів")
                 .font(.headline)
                 .fontWeight(.semibold)
             
-            // На iOS 16+ використовуємо нативні Charts
             if #available(iOS 16.0, *) {
                 Chart {
-                    ForEach(rates) { rate in
+                    ForEach(viewModel.rates) { rate in
                         BarMark(
                             x: .value("Банк", rate.name),
                             y: .value("Курс", rate.buyRate)
@@ -360,17 +396,15 @@ struct ExchangeRateView: View {
                     }
                 }
                 .chartPlotStyle { plotArea in
-                    // Відступ знизу для уникнення перекриття підписів
-                    plotArea
-                        .padding(.bottom, 30)
+                    plotArea.padding(.bottom, 30)
                 }
                 .chartXAxis {
                     AxisMarks { value in
                         AxisValueLabel {
                             if let label = value.as(String.self) {
                                 Text(label)
-                                    .rotationEffect(.degrees(-90))  // Обертання на -90градусів
-                                    .offset(x: 0, y: 8)              // Зсув підпису
+                                    .rotationEffect(.degrees(-90))
+                                    .offset(x: 0, y: 8)
                             }
                         }
                         AxisTick()
@@ -378,12 +412,9 @@ struct ExchangeRateView: View {
                     }
                 }
                 .frame(height: 250)
-                .chartYScale(domain: getChartYDomain())
+                .chartYScale(domain: viewModel.getChartYDomain())
                 .chartLegend(position: .top, alignment: .center)
-                
-            }
-                else {
-                // Для iOS 15 альтернативні графіки
+            } else {
                 alternativeChartView
             }
         }
@@ -392,19 +423,7 @@ struct ExchangeRateView: View {
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
-
-    // Покращена функція для визначення меж графіка
-    private func getChartYDomain() -> ClosedRange<Double> {
-        guard !rates.isEmpty else { return 0...50 }
-        
-        let minValue = (rates.map { $0.buyRate }.min() ?? 0) * 0.99 // Додаємо невеликий запас знизу (2%)
-        let maxValue = (rates.map { $0.sellRate }.max() ?? 50) * 1.01 // Додаємо невеликий запас зверху (2%)
-        
-        return minValue...maxValue
-    }
-
     
-    // Альтернативне відображення графіка для iOS 15 та нижче
     private var alternativeChartView: some View {
         VStack(spacing: 16) {
             Text("Курси в графічному вигляді доступні в iOS 16+")
@@ -412,11 +431,9 @@ struct ExchangeRateView: View {
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
             
-            // Візуалізація через стовпчики
             HStack(alignment: .bottom, spacing: 12) {
-                ForEach(rates) { rate in
+                ForEach(viewModel.rates) { rate in
                     VStack(spacing: 4) {
-                        // Стовпчик продажу
                         VStack {
                             Spacer()
                             Text(String(format: "%.2f", rate.sellRate))
@@ -429,7 +446,6 @@ struct ExchangeRateView: View {
                         .background(Color.blue)
                         .cornerRadius(4)
                         
-                        // Стовпчик купівлі
                         VStack {
                             Spacer()
                             Text(String(format: "%.2f", rate.buyRate))
@@ -442,7 +458,6 @@ struct ExchangeRateView: View {
                         .background(Color.green)
                         .cornerRadius(4)
                         
-                        // Назва банку
                         Text(rate.name)
                             .font(.caption)
                             .fixedSize(horizontal: false, vertical: true)
@@ -453,7 +468,6 @@ struct ExchangeRateView: View {
             }
             .frame(height: 250)
             
-            // Легенда
             HStack(spacing: 16) {
                 HStack(spacing: 8) {
                     Rectangle()
@@ -481,7 +495,6 @@ struct ExchangeRateView: View {
                 .fontWeight(.semibold)
             
             VStack(spacing: 0) {
-                // Заголовок таблиці
                 HStack {
                     Text("Банк")
                         .font(.subheadline)
@@ -507,8 +520,7 @@ struct ExchangeRateView: View {
                 .padding(.horizontal)
                 .background(Color(UIColor.systemGray5))
                 
-                // Рядки таблиці
-                ForEach(rates) { rate in
+                ForEach(viewModel.rates) { rate in
                     HStack {
                         Text(rate.name)
                             .font(.subheadline)
@@ -557,4 +569,6 @@ struct ExchangeRateView: View {
             .padding(.vertical)
     }
 }
+
+
 

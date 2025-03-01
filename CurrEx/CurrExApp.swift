@@ -7,12 +7,13 @@
 
 import SwiftUI
 
-// MARK: - Точка входу в додаток
+// MARK: - App Entry Point
 @main
 struct ExchangeRateApp: App {
     var body: some Scene {
         WindowGroup {
             ExchangeRateView()
+                .accentColor(Color.blue)
         }
     }
 }
