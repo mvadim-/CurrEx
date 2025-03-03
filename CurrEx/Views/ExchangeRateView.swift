@@ -32,10 +32,10 @@ struct ExchangeRateView: View {
                     Button(action: {
                         showingHistoricalView = true
                     }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "chart.line.uptrend.xyaxis")
-                            Text("Історія")
-                        }
+//                        HStack(spacing: 4) {
+//                            Image(systemName: "chart.line.uptrend.xyaxis")
+//                            Text("Історія")
+//                        }
                     }
                 }
             }

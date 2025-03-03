@@ -40,10 +40,11 @@ struct HistoricalChartView: View {
         Chart {
             ForEach(historicalData) { dataPoint in
                 ForEach(Array(visibleBanks), id: \.self) { bank in
-                    if dataPoint.getBuyRate(for: bank) > 0 {
+                    // Only draw if the bank has data for this point
+                    if let bankRate = dataPoint.bankRates[bank], bankRate.buy > 0 {
                         LineMark(
                             x: .value("Дата", dataPoint.date),
-                            y: .value("Курс", dataPoint.getBuyRate(for: bank))
+                            y: .value("Курс", bankRate.buy)
                         )
                         .foregroundStyle(colors[bank, default: .gray])
                         .symbol {
@@ -56,17 +57,17 @@ struct HistoricalChartView: View {
                         .opacity(0.7)
                         .annotation(position: .top) {
                             if dataPoint.id == historicalData.last?.id {
-                                Text(String(format: "%.2f ₴", dataPoint.getBuyRate(for: bank)))
+                                Text(String(format: "%.2f ₴", bankRate.buy))
                                     .font(.caption2)
                                     .foregroundColor(colors[bank, default: .gray])
                             }
                         }
                     }
                     
-                    if dataPoint.getSellRate(for: bank) > 0 {
+                    if let bankRate = dataPoint.bankRates[bank], bankRate.sell > 0 {
                         LineMark(
                             x: .value("Дата", dataPoint.date),
-                            y: .value("Курс", dataPoint.getSellRate(for: bank))
+                            y: .value("Курс", bankRate.sell)
                         )
                         .foregroundStyle(colors[bank, default: .gray])
                         .symbol {
@@ -79,7 +80,7 @@ struct HistoricalChartView: View {
                         .opacity(0.7)
                         .annotation(position: .top) {
                             if dataPoint.id == historicalData.last?.id {
-                                Text(String(format: "%.2f ₴", dataPoint.getSellRate(for: bank)))
+                                Text(String(format: "%.2f ₴", bankRate.sell))
                                     .font(.caption2)
                                     .foregroundColor(colors[bank, default: .gray])
                             }
@@ -118,19 +119,21 @@ struct HistoricalChartView: View {
                         .fontWeight(.semibold)
                     
                     ForEach(Array(visibleBanks), id: \.self) { bank in
-                        HStack {
-                            Text(bank)
-                                .font(.subheadline)
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing) {
-                                Text("Купівля: \(String(format: "%.2f", firstDataPoint.getBuyRate(for: bank))) ₴")
-                                Text("Продаж: \(String(format: "%.2f", firstDataPoint.getSellRate(for: bank))) ₴")
+                        if let bankRate = firstDataPoint.bankRates[bank] {
+                            HStack {
+                                Text(bank)
+                                    .font(.subheadline)
+                                
+                                Spacer()
+                                
+                                VStack(alignment: .trailing) {
+                                    Text("Купівля: \(String(format: "%.2f", bankRate.buy)) ₴")
+                                    Text("Продаж: \(String(format: "%.2f", bankRate.sell)) ₴")
+                                }
+                                .font(.caption)
                             }
-                            .font(.caption)
+                            .padding(.vertical, 4)
                         }
-                        .padding(.vertical, 4)
                     }
                     
                     Text("Останній курс:")
@@ -139,19 +142,21 @@ struct HistoricalChartView: View {
                         .padding(.top, 8)
                     
                     ForEach(Array(visibleBanks), id: \.self) { bank in
-                        HStack {
-                            Text(bank)
-                                .font(.subheadline)
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing) {
-                                Text("Купівля: \(String(format: "%.2f", lastDataPoint.getBuyRate(for: bank))) ₴")
-                                Text("Продаж: \(String(format: "%.2f", lastDataPoint.getSellRate(for: bank))) ₴")
+                        if let bankRate = lastDataPoint.bankRates[bank] {
+                            HStack {
+                                Text(bank)
+                                    .font(.subheadline)
+                                
+                                Spacer()
+                                
+                                VStack(alignment: .trailing) {
+                                    Text("Купівля: \(String(format: "%.2f", bankRate.buy)) ₴")
+                                    Text("Продаж: \(String(format: "%.2f", bankRate.sell)) ₴")
+                                }
+                                .font(.caption)
                             }
-                            .font(.caption)
+                            .padding(.vertical, 4)
                         }
-                        .padding(.vertical, 4)
                     }
                 }
                 .padding()

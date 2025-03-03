@@ -75,30 +75,33 @@ class HistoricalExchangeRatesService {
             var bankRates: [String: (buy: Double, sell: Double)] = [:]
             
             // Process Bestobmin
-            if let rate = dataPoint.rates.Bestobmin.first {
+            if let bestobminRates = dataPoint.rates.Bestobmin, let rate = bestobminRates.first {
                 let buyRate = parseAndRound(rate.rate_buy)
                 let sellRate = parseAndRound(rate.rate_sell)
                 bankRates["Bestobmin"] = (buy: buyRate, sell: sellRate)
             }
             
             // Process PrivatBank
-            if let rate = dataPoint.rates.PrivatBank.first {
+            if let privatBankRates = dataPoint.rates.PrivatBank, let rate = privatBankRates.first {
                 let buyRate = parseAndRound(rate.rate_buy)
                 let sellRate = parseAndRound(rate.rate_sell)
                 bankRates["PrivatBank"] = (buy: buyRate, sell: sellRate)
             }
             
             // Process Raiffeisen
-            if let rate = dataPoint.rates.Raiffeisen.first {
+            if let raiffeisenRates = dataPoint.rates.Raiffeisen, let rate = raiffeisenRates.first {
                 let buyRate = parseAndRound(rate.rate_buy)
                 let sellRate = parseAndRound(rate.rate_sell)
                 bankRates["Raiffeisen"] = (buy: buyRate, sell: sellRate)
             }
             
-            results.append(HistoricalRateDataPoint(
-                date: date,
-                bankRates: bankRates
-            ))
+            // Only add data point if we have at least one bank rate
+            if !bankRates.isEmpty {
+                results.append(HistoricalRateDataPoint(
+                    date: date,
+                    bankRates: bankRates
+                ))
+            }
         }
         
         // Sort by date

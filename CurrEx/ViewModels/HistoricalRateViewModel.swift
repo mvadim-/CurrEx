@@ -37,6 +37,10 @@ class HistoricalRatesViewModel: ObservableObject {
                     period: selectedPeriod.rawValue
                 )
                 lastUpdated = formatCurrentTime()
+                
+                // Ensure we have valid banks to display
+                updateVisibleBanks()
+                
                 isLoading = false
             } catch {
                 errorMessage = "Помилка завантаження історичних даних: \(error.localizedDescription)"
@@ -61,6 +65,30 @@ class HistoricalRatesViewModel: ObservableObject {
         return visibleBanks.contains(bank)
     }
     
+    // Update visible banks based on available data
+    private func updateVisibleBanks() {
+        if historicalData.isEmpty {
+            return
+        }
+        
+        // Get a list of banks that actually have data
+        var availableBanks: Set<String> = []
+        
+        for dataPoint in historicalData {
+            for (bank, _) in dataPoint.bankRates {
+                availableBanks.insert(bank)
+            }
+        }
+        
+        // Only show banks that have data
+        visibleBanks = visibleBanks.intersection(availableBanks)
+        
+        // If all were filtered out, show all available banks
+        if visibleBanks.isEmpty {
+            visibleBanks = availableBanks
+        }
+    }
+    
     func getDateRange() -> String {
         guard let firstDate = historicalData.first?.date, let lastDate = historicalData.last?.date else {
             return "Немає даних"
@@ -73,28 +101,39 @@ class HistoricalRatesViewModel: ObservableObject {
     }
     
     func getYDomain() -> ClosedRange<Double> {
-        var minValue: Double = Double.greatestFiniteMagnitude
-        var maxValue: Double = 0
+        // Default domain in case of errors
+        let defaultDomain: ClosedRange<Double> = 0...50
         
+        // Exit early if there's no data
+        if historicalData.isEmpty || visibleBanks.isEmpty {
+            return defaultDomain
+        }
+        
+        var allValues: [Double] = []
+        
+        // Collect all valid rate values
         for dataPoint in historicalData {
             for bank in visibleBanks {
-                let buyRate = dataPoint.getBuyRate(for: bank)
-                let sellRate = dataPoint.getSellRate(for: bank)
-                
-                if buyRate > 0 && buyRate < minValue {
-                    minValue = buyRate
-                }
-                
-                if sellRate > maxValue {
-                    maxValue = sellRate
+                if let bankRate = dataPoint.bankRates[bank] {
+                    if bankRate.buy > 0 {
+                        allValues.append(bankRate.buy)
+                    }
+                    if bankRate.sell > 0 {
+                        allValues.append(bankRate.sell)
+                    }
                 }
             }
         }
         
-        // Add some padding for better visualization
-        minValue = max(0, minValue * 0.99)
-        maxValue = maxValue * 1.01
+        // If we don't have any values, return default domain
+        if allValues.isEmpty {
+            return defaultDomain
+        }
         
-        return minValue == Double.greatestFiniteMagnitude ? 0...50 : minValue...maxValue
+        // Calculate min and max with padding
+        let minValue = (allValues.min() ?? 0) * 0.99
+        let maxValue = (allValues.max() ?? 50) * 1.01
+        
+        return minValue...maxValue
     }
 }

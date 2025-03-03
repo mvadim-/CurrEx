@@ -43,9 +43,9 @@ struct HistoricalDataPoint: Codable {
 }
 
 struct RatesData: Codable {
-    let Bestobmin: [BankRate]
-    let PrivatBank: [BankRate]
-    let Raiffeisen: [BankRate]
+    let Bestobmin: [BankRate]?
+    let PrivatBank: [BankRate]?
+    let Raiffeisen: [BankRate]?
 }
 
 // MARK: - View Models
