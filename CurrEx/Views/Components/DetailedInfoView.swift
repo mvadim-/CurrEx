@@ -82,7 +82,7 @@ struct DetailedInfoView: View {
     }
 }
 
-#Preview {
+#Preview(traits: .sizeThatFitsLayout) {
     DetailedInfoView(
         rates: [
             BankRateViewModel(name: "PrivatBank", buyRate: 38.5, sellRate: 39.2, timestamp: ""),
@@ -92,5 +92,4 @@ struct DetailedInfoView: View {
     )
     .padding()
     .background(Color(UIColor.systemGray6))
-    .previewLayout(.sizeThatFits)
 }

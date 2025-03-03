@@ -66,12 +66,11 @@ struct BestRatesView: View {
     }
 }
 
-#Preview {
+#Preview(traits: .sizeThatFitsLayout) {
     BestRatesView(
         bestBuy: BankRateViewModel(name: "PrivatBank", buyRate: 38.5, sellRate: 39.2, timestamp: ""),
         bestSell: BankRateViewModel(name: "Raiffeisen", buyRate: 38.3, sellRate: 38.9, timestamp: "")
     )
     .padding()
     .background(Color(UIColor.systemGray6))
-    .previewLayout(.sizeThatFits)
 }

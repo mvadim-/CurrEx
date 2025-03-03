@@ -143,7 +143,7 @@ struct RateChartView: View {
     }
 }
 
-#Preview {
+#Preview(traits: .sizeThatFitsLayout) {
     RateChartView(
         rates: [
             BankRateViewModel(name: "PrivatBank", buyRate: 38.5, sellRate: 39.2, timestamp: ""),
@@ -154,5 +154,4 @@ struct RateChartView: View {
     )
     .padding()
     .background(Color(UIColor.systemGray6))
-    .previewLayout(.sizeThatFits)
 }

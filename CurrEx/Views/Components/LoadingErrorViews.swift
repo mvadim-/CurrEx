@@ -76,7 +76,7 @@ struct DisclaimerView: View {
     }
 }
 
-#Preview {
+#Preview(traits: .sizeThatFitsLayout) {
     VStack(spacing: 30) {
         LoadingView()
             .padding()
@@ -96,5 +96,4 @@ struct DisclaimerView: View {
     }
     .padding()
     .background(Color(UIColor.systemGray6))
-    .previewLayout(.sizeThatFits)
 }

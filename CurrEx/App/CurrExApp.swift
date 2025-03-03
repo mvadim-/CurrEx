@@ -9,7 +9,7 @@ import SwiftUI
 
 // MARK: - App Entry Point
 @main
-struct ExchangeRateApp: App {
+struct CurrExApp: App {
     var body: some Scene {
         WindowGroup {
             ExchangeRateView()
