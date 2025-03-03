@@ -9,6 +9,7 @@ import SwiftUI
 struct ExchangeRateView: View {
     @StateObject private var viewModel = ExchangeRateViewModel()
     @State private var currentTab = 0
+    @State private var showingHistoricalView = false
     
     var body: some View {
         NavigationView {
@@ -26,6 +27,26 @@ struct ExchangeRateView: View {
                 }
             }
             .navigationTitle("Курс валют в Україні")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showingHistoricalView = true
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chart.line.uptrend.xyaxis")
+                            Text("Історія")
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showingHistoricalView) {
+                NavigationView {
+                    HistoricalRateView(currency: viewModel.selectedCurrency)
+                        .navigationBarItems(trailing: Button("Закрити") {
+                            showingHistoricalView = false
+                        })
+                }
+            }
         }
         .onAppear {
             viewModel.loadDataForAllCurrencies()
@@ -44,7 +65,7 @@ struct ExchangeRateView: View {
             }
             .tabViewStyle(PageTabViewStyle())
             .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
-            .onChange(of: currentTab) { oldValue, newValue in
+            .onChange(of: currentTab) { newValue in
                 viewModel.selectedCurrency = newValue == 0 ? .usd : .eur
             }
         }
@@ -56,7 +77,23 @@ struct ExchangeRateView: View {
                 HStack {
                     Text("Валюта: \(currency.displayName)")
                         .font(.headline)
+                    
                     Spacer()
+                    
+                    Button(action: {
+                        showingHistoricalView = true
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chart.line.uptrend.xyaxis")
+                            Text("Історія")
+                        }
+                        .font(.subheadline)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                    }
                 }
                 .padding(.vertical, 8)
                 
