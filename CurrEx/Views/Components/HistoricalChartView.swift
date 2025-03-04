@@ -11,6 +11,10 @@ struct HistoricalChartView: View {
     let visibleBanks: Set<String>
     let yDomain: ClosedRange<Double>
     
+    @State private var selectedDataPoint: HistoricalRateDataPoint?
+    @State private var selectedBank: String?
+    @State private var isShowingSellRate: Bool = false
+    
     private let colors: [String: Color] = [
         "Bestobmin": .green,
         "PrivatBank": .blue,
@@ -37,72 +41,162 @@ struct HistoricalChartView: View {
     
     @available(iOS 16.0, *)
     private var modernChartView: some View {
-        Chart {
-            ForEach(historicalData) { dataPoint in
+        VStack {
+            Chart {
                 ForEach(Array(visibleBanks), id: \.self) { bank in
-                    // Only draw if the bank has data for this point
-                    if let bankRate = dataPoint.bankRates[bank], bankRate.buy > 0 {
-                        LineMark(
-                            x: .value("Дата", dataPoint.date),
-                            y: .value("Курс", bankRate.buy)
-                        )
-                        .foregroundStyle(colors[bank, default: .gray])
-                        .symbol {
-                            Circle()
-                                .fill(colors[bank, default: .gray])
-                                .frame(width: 5, height: 5)
-                        }
-                        .interpolationMethod(.catmullRom)
-                        .lineStyle(StrokeStyle(lineWidth: 2, dash: []))
-                        .opacity(0.7)
-                        .annotation(position: .top) {
-                            if dataPoint.id == historicalData.last?.id {
-                                Text(String(format: "%.2f ₴", bankRate.buy))
-                                    .font(.caption2)
-                                    .foregroundColor(colors[bank, default: .gray])
+                    // Only show buy rates (separate from sell rates)
+                    ForEach(historicalData) { dataPoint in
+                        if let bankRate = dataPoint.bankRates[bank], bankRate.buy > 0 {
+                            LineMark(
+                                x: .value("Дата", dataPoint.date),
+                                y: .value("Курс", bankRate.buy)
+                            )
+                            .foregroundStyle(by: .value("Bank Buy", "\(bank) (Buy)"))
+                            .symbol {
+                                Circle()
+                                    .fill(colors[bank, default: .gray])
+                                    .frame(width: 5, height: 5)
                             }
+                            .interpolationMethod(.linear) // Change to straight lines
+                            .lineStyle(StrokeStyle(lineWidth: 2, dash: []))
+                            .opacity(0.7)
+                            .foregroundStyle(colors[bank, default: .gray])
                         }
                     }
                     
-                    if let bankRate = dataPoint.bankRates[bank], bankRate.sell > 0 {
-                        LineMark(
-                            x: .value("Дата", dataPoint.date),
-                            y: .value("Курс", bankRate.sell)
-                        )
-                        .foregroundStyle(colors[bank, default: .gray])
-                        .symbol {
-                            Circle()
-                                .stroke(colors[bank, default: .gray], lineWidth: 2)
-                                .frame(width: 5, height: 5)
-                        }
-                        .interpolationMethod(.catmullRom)
-                        .lineStyle(StrokeStyle(lineWidth: 2, dash: [4, 2]))
-                        .opacity(0.7)
-                        .annotation(position: .top) {
-                            if dataPoint.id == historicalData.last?.id {
-                                Text(String(format: "%.2f ₴", bankRate.sell))
-                                    .font(.caption2)
-                                    .foregroundColor(colors[bank, default: .gray])
+                    // Separate loop for sell rates
+                    ForEach(historicalData) { dataPoint in
+                        if let bankRate = dataPoint.bankRates[bank], bankRate.sell > 0 {
+                            LineMark(
+                                x: .value("Дата", dataPoint.date),
+                                y: .value("Курс", bankRate.sell)
+                            )
+                            .foregroundStyle(by: .value("Bank Sell", "\(bank) (Sell)"))
+                            .symbol {
+                                Circle()
+                                    .stroke(colors[bank, default: .gray], lineWidth: 2)
+                                    .frame(width: 5, height: 5)
                             }
+                            .interpolationMethod(.linear) // Change to straight lines
+                            .lineStyle(StrokeStyle(lineWidth: 2, dash: [4, 2]))
+                            .opacity(0.7)
+                            .foregroundStyle(colors[bank, default: .gray])
+                        }
+                    }
+                }
+                
+                if let selectedPoint = selectedDataPoint,
+                   let selectedBankName = selectedBank,
+                   let bankRate = selectedPoint.bankRates[selectedBankName] {
+                    let rateValue = isShowingSellRate ? bankRate.sell : bankRate.buy
+                    
+                    PointMark(
+                        x: .value("Дата", selectedPoint.date),
+                        y: .value("Курс", rateValue)
+                    )
+                    .foregroundStyle(.white)
+                    .symbolSize(CGSize(width: 12, height: 12))
+                    .annotation(position: .top) {
+                        VStack(alignment: .center, spacing: 4) {
+                            Text(selectedBankName)
+                                .font(.caption)
+                                .fontWeight(.bold)
+                            
+                            Text(String(format: "%.2f ₴", rateValue))
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                
+                            Text(selectedPoint.date, format: .dateTime.day().month().year())
+                                .font(.caption2)
+                        }
+                        .padding(8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.white)
+                                .shadow(radius: 2)
+                        )
+                    }
+                }
+            }
+            .chartXAxis {
+                AxisMarks { value in
+                    AxisGridLine()
+                    AxisValueLabel {
+                        if let date = value.as(Date.self) {
+                            Text(date, format: .dateTime.day().month())
+                                .font(.caption)
                         }
                     }
                 }
             }
-        }
-        .chartXAxis {
-            AxisMarks { value in
-                AxisGridLine()
-                AxisValueLabel {
-                    if let date = value.as(Date.self) {
-                        Text(date, format: .dateTime.day().month())
-                            .font(.caption)
-                    }
+            .chartYScale(domain: yDomain)
+            .frame(height: 300)
+            .chartLegend(.hidden)
+            .chartOverlay { proxy in
+                GeometryReader { geometry in
+                    Rectangle()
+                        .fill(Color.clear)
+                        .contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    let xPosition = value.location.x
+                                    let yPosition = value.location.y
+                                    
+                                    // Find the closest point to the tap location
+                                    findClosestDataPoint(at: xPosition, y: yPosition, in: proxy, with: geometry)
+                                }
+                                .onEnded { _ in
+                                    // Keep the selected point visible
+                                }
+                        )
                 }
             }
         }
-        .chartYScale(domain: yDomain)
-        .frame(height: 300)
-        .chartLegend(.hidden)
+    }
+    
+    @available(iOS 16.0, *)
+    private func findClosestDataPoint(at xPosition: CGFloat, y yPosition: CGFloat, in proxy: ChartProxy, with geometry: GeometryProxy) {
+        guard !historicalData.isEmpty, !visibleBanks.isEmpty else { return }
+        
+        // Convert the tap position to a date using the ChartProxy
+        guard let date = proxy.value(atX: xPosition, as: Date.self) else { return }
+        
+        // Find the closest data point to the date
+        let closestPoint = historicalData.min(by: { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) })
+        
+        guard let closestDataPoint = closestPoint else { return }
+        
+        // Convert the tap y-position to a rate value
+        guard let tappedRate = proxy.value(atY: yPosition, as: Double.self) else { return }
+        
+        // Find the bank and whether it's buy or sell rate that is closest to the tap
+        var closestBank: String? = nil
+        var closestDistance = Double.infinity
+        var isSellRate = false
+        
+        for bank in visibleBanks {
+            if let rates = closestDataPoint.bankRates[bank] {
+                let buyDistance = abs(rates.buy - tappedRate)
+                let sellDistance = abs(rates.sell - tappedRate)
+                
+                if buyDistance < closestDistance {
+                    closestDistance = buyDistance
+                    closestBank = bank
+                    isSellRate = false
+                }
+                
+                if sellDistance < closestDistance {
+                    closestDistance = sellDistance
+                    closestBank = bank
+                    isSellRate = true
+                }
+            }
+        }
+        
+        selectedDataPoint = closestDataPoint
+        selectedBank = closestBank
+        isShowingSellRate = isSellRate
     }
     
     private var legacyChartView: some View {
