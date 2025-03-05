@@ -13,7 +13,7 @@ struct DetailedInfoView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Detailed Information")
+            Text(NSLocalizedString("Detailed Information", comment: "Detailed info section title"))
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundColor(AppColors.text)
@@ -21,25 +21,25 @@ struct DetailedInfoView: View {
             VStack(spacing: 0) {
                 // Table header
                 HStack {
-                    Text("Bank")
+                    Text(NSLocalizedString("Bank", comment: "Bank column header"))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .foregroundColor(AppColors.text)
                     
-                    Text("Buy")
+                    Text(NSLocalizedString("Buy", comment: "Buy column header"))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .frame(width: 70, alignment: .trailing)
                         .foregroundColor(AppColors.text)
                     
-                    Text("Sell")
+                    Text(NSLocalizedString("Sell", comment: "Sell column header"))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .frame(width: 70, alignment: .trailing)
                         .foregroundColor(AppColors.text)
                     
-                    Text("Spread")
+                    Text(NSLocalizedString("Spread", comment: "Spread column header"))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .frame(width: 70, alignment: .trailing)

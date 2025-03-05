@@ -12,6 +12,10 @@ struct ExchangeRateView: View {
     @StateObject private var viewModel: ExchangeRateViewModel
     @State private var currentTab = 0
     @State private var showingHistoricalView = false
+    @State private var showingSettings = false
+    
+    /// Observes language changes to refresh the view
+    @ObservedObject private var settingsManager = SettingsManager.shared
     
     /// Initializes the view with a view model
     /// - Parameter viewModel: View model for exchange rates
@@ -34,16 +38,21 @@ struct ExchangeRateView: View {
                     mainContentView
                 }
             }
-            .navigationTitle("Exchange Rates in IF")
+            .navigationTitle(NSLocalizedString("Exchange Rates in IF", comment: "App main title"))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingHistoricalView = true
-                    }) {
-//                        HStack(spacing: 4) {
-//                            Image(systemName: "chart.line.uptrend.xyaxis")
-//                            Text("History")
-//                        }
+                    HStack(spacing: 16) {
+                        Button(action: {
+                            showingHistoricalView = true
+                        }) {
+                            Image(systemName: "chart.line.uptrend.xyaxis")
+                        }
+                        
+                        Button(action: {
+                            showingSettings = true
+                        }) {
+                            Image(systemName: "gear")
+                        }
                     }
                 }
                 
@@ -58,14 +67,21 @@ struct ExchangeRateView: View {
             .sheet(isPresented: $showingHistoricalView) {
                 NavigationView {
                     HistoricalRateView(currency: viewModel.selectedCurrency)
-                        .navigationBarItems(trailing: Button("Close") {
+                        .navigationBarItems(trailing: Button(NSLocalizedString("Close", comment: "Close button")) {
                             showingHistoricalView = false
                         })
                 }
             }
+            .sheet(isPresented: $showingSettings) {
+                SettingsView()
+            }
         }
         .onAppear {
             viewModel.loadDataForAllCurrencies()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("LanguageChanged"))) { _ in
+            // Force view refresh when language changes
+            viewModel.lastUpdated = Formatters.formatCurrentDateTime()
         }
     }
     
@@ -106,7 +122,7 @@ struct ExchangeRateView: View {
         ScrollView {
             LazyVStack(spacing: 16) {
                 HStack {
-                    Text("Currency: \(currency.displayName)")
+                    Text(NSLocalizedString("Currency:", comment: "Currency label") + " \(currency.displayName)")
                         .font(.headline)
                         .foregroundColor(AppColors.text)
                     
@@ -117,7 +133,7 @@ struct ExchangeRateView: View {
                     }) {
                         HStack(spacing: 4) {
                             Image(systemName: "chart.line.uptrend.xyaxis")
-                            Text("History")
+                            Text(NSLocalizedString("History", comment: "History button"))
                         }
                         .font(.subheadline)
                         .padding(.horizontal, 12)

@@ -14,7 +14,7 @@ struct LoadingView: View {
             ProgressView()
                 .scaleEffect(1.5)
             
-            Text("Loading exchange rates...")
+            Text(NSLocalizedString("Loading exchange rates...", comment: "Loading state message"))
                 .font(.headline)
                 .foregroundColor(AppColors.secondaryText)
                 .padding(.top, 16)
@@ -36,7 +36,7 @@ struct ErrorView: View {
                 .font(.system(size: 50))
                 .foregroundColor(.red)
             
-            Text("Error")
+            Text(NSLocalizedString("Error", comment: "Error title"))
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.red)
@@ -48,7 +48,7 @@ struct ErrorView: View {
                 .foregroundColor(AppColors.text)
             
             Button(action: retryAction) {
-                Text("Try Again")
+                Text(NSLocalizedString("Try Again", comment: "Retry button"))
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
                     .padding(.vertical, 12)
@@ -70,7 +70,7 @@ struct LastUpdatedView: View {
     var body: some View {
         HStack {
             Spacer()
-            Text("Updated: \(timestamp)")
+            Text("\(NSLocalizedString("Updated:", comment: "Last updated label")) \(timestamp)")
                 .font(.caption)
                 .foregroundColor(AppColors.secondaryText)
         }
@@ -80,7 +80,7 @@ struct LastUpdatedView: View {
 /// Disclaimer text view
 struct DisclaimerView: View {
     var body: some View {
-        Text("Exchange rate data is provided for informational purposes only and may differ from actual values.")
+        Text(NSLocalizedString("Exchange rate data is provided for informational purposes only and may differ from actual values.", comment: "Disclaimer text"))
             .font(.caption)
             .foregroundColor(AppColors.secondaryText)
             .multilineTextAlignment(.center)

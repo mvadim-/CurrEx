@@ -23,6 +23,11 @@ class ServiceContainer {
 // MARK: - App Entry Point
 @main
 struct CurrExApp: App {
+    init() {
+        // Configure app with settings and localization
+        configureApp()
+    }
+    
     var body: some Scene {
         WindowGroup {
             ExchangeRateView(

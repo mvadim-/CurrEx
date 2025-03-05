@@ -1,0 +1,64 @@
+/*
+  Localizable.strings (English)
+  CurrEx
+
+  Created for CurrEx on 05.03.2025.
+*/
+
+// MARK: - General
+"Settings" = "Settings";
+"Done" = "Done";
+"Cancel" = "Cancel";
+"Close" = "Close";
+
+// MARK: - Language
+"Language" = "Language";
+"English" = "English";
+"Українська" = "Ukrainian";
+
+// MARK: - Information
+"Information" = "Information";
+"Version" = "Version";
+"Build" = "Build";
+"Some settings may require restarting the app to fully take effect." = "Some settings may require restarting the app to fully take effect.";
+
+// MARK: - Exchange Rate View
+"Exchange Rates in IF" = "Exchange Rates in IF";
+"Currency:" = "Currency:";
+"History" = "History";
+"Best Rates" = "Best Rates";
+"Best to sell at" = "Best to sell at";
+"Best to buy at" = "Best to buy at";
+"No data" = "No data";
+"Rate Comparison" = "Rate Comparison";
+"Bank" = "Bank";
+"Buy" = "Buy";
+"Sell" = "Sell";
+"Spread" = "Spread";
+"Detailed Information" = "Detailed Information";
+"Loading exchange rates..." = "Loading exchange rates...";
+"Error" = "Error";
+"Try Again" = "Try Again";
+"Updated:" = "Updated:";
+"Not specified" = "Not specified";
+"Not updated" = "Not updated";
+"Exchange rate data is provided for informational purposes only and may differ from actual values." = "Exchange rate data is provided for informational purposes only and may differ from actual values.";
+
+// MARK: - Historical View
+"Historical %@ Rates" = "Historical %@ Rates";
+"Period" = "Period";
+"1 day" = "1 day";
+"3 days" = "3 days";
+"7 days" = "7 days";
+"30 days" = "30 days";
+"90 days" = "90 days";
+"180 days" = "180 days";
+"360 days" = "360 days";
+"Banks" = "Banks";
+"Rate History" = "Rate History";
+"No data available for the selected period" = "No data available for the selected period";
+"Period:" = "Period:";
+"No data" = "No data";
+"Chart history is available in iOS 16+" = "Chart history is available in iOS 16+";
+"Initial rates:" = "Initial rates:";
+"Latest rates:" = "Latest rates:";

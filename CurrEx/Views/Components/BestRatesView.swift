@@ -14,7 +14,7 @@ struct BestRatesView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Best Rates")
+            Text(NSLocalizedString("Best Rates", comment: "Best rates section title"))
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundColor(AppColors.text)
@@ -22,7 +22,7 @@ struct BestRatesView: View {
             HStack(spacing: 12) {
                 // Best buy rates
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Best to sell at")
+                    Text(NSLocalizedString("Best to sell at", comment: "Best to sell at label"))
                         .font(.caption)
                         .foregroundColor(AppColors.secondaryText)
                     
@@ -32,7 +32,7 @@ struct BestRatesView: View {
                             .fontWeight(.bold)
                             .foregroundColor(AppColors.buyColor)
                     } else {
-                        Text("No data")
+                        Text(NSLocalizedString("No data", comment: "No data placeholder"))
                             .font(.title3)
                             .foregroundColor(AppColors.tertiaryText)
                     }
@@ -48,7 +48,7 @@ struct BestRatesView: View {
                 
                 // Best sell rates
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Best to buy at")
+                    Text(NSLocalizedString("Best to buy at", comment: "Best to buy at label"))
                         .font(.caption)
                         .foregroundColor(AppColors.secondaryText)
                     
@@ -58,7 +58,7 @@ struct BestRatesView: View {
                             .fontWeight(.bold)
                             .foregroundColor(AppColors.sellColor)
                     } else {
-                        Text("No data")
+                        Text(NSLocalizedString("No data", comment: "No data placeholder"))
                             .font(.title3)
                             .foregroundColor(AppColors.tertiaryText)
                     }

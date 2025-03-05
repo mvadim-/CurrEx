@@ -15,7 +15,7 @@ struct RateChartView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Rate Comparison")
+            Text(NSLocalizedString("Rate Comparison", comment: "Rate comparison section title"))
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundColor(AppColors.text)
@@ -35,11 +35,11 @@ struct RateChartView: View {
         Chart {
             ForEach(rates) { rate in
                 BarMark(
-                    x: .value("Bank", rate.name),
-                    y: .value("Rate", rate.buyRate)
+                    x: .value(NSLocalizedString("Bank", comment: "Chart bank label"), rate.name),
+                    y: .value(NSLocalizedString("Rate", comment: "Chart rate label"), rate.buyRate)
                 )
                 .foregroundStyle(AppColors.buyColor)
-                .position(by: .value("Type", "Buy"), axis: .horizontal)
+                .position(by: .value("Type", NSLocalizedString("Buy", comment: "Buy rate type")), axis: .horizontal)
                 .annotation(position: .top) {
                     Text(String(format: "%.2f", rate.buyRate))
                         .font(.caption2)
@@ -47,11 +47,11 @@ struct RateChartView: View {
                 }
 
                 BarMark(
-                    x: .value("Bank", rate.name),
-                    y: .value("Rate", rate.sellRate)
+                    x: .value(NSLocalizedString("Bank", comment: "Chart bank label"), rate.name),
+                    y: .value(NSLocalizedString("Rate", comment: "Chart rate label"), rate.sellRate)
                 )
                 .foregroundStyle(AppColors.sellColor)
-                .position(by: .value("Type", "Sell"), axis: .horizontal)
+                .position(by: .value("Type", NSLocalizedString("Sell", comment: "Sell rate type")), axis: .horizontal)
                 .annotation(position: .top) {
                     Text(String(format: "%.2f", rate.sellRate))
                         .font(.caption2)
@@ -96,7 +96,7 @@ struct RateChartView: View {
     /// Legacy chart view for iOS versions earlier than 16
     private var legacyChartView: some View {
         VStack(spacing: 16) {
-            Text("Chart view is available in iOS 16+")
+            Text(NSLocalizedString("Chart view is available in iOS 16+", comment: "Legacy chart message"))
                 .font(.caption)
                 .foregroundColor(AppColors.secondaryText)
                 .multilineTextAlignment(.center)
@@ -144,7 +144,7 @@ struct RateChartView: View {
                     Rectangle()
                         .fill(AppColors.buyColor)
                         .frame(width: 12, height: 12)
-                    Text("Buy")
+                    Text(NSLocalizedString("Buy", comment: "Buy legend label"))
                         .font(.caption)
                         .foregroundColor(AppColors.text)
                 }
@@ -153,7 +153,7 @@ struct RateChartView: View {
                     Rectangle()
                         .fill(AppColors.sellColor)
                         .frame(width: 12, height: 12)
-                    Text("Sell")
+                    Text(NSLocalizedString("Sell", comment: "Sell legend label"))
                         .font(.caption)
                         .foregroundColor(AppColors.text)
                 }

@@ -1,0 +1,64 @@
+/*
+  Localizable.strings (Ukrainian)
+  CurrEx
+
+  Created for CurrEx on 05.03.2025.
+*/
+
+// MARK: - General
+"Settings" = "Налаштування";
+"Done" = "Готово";
+"Cancel" = "Скасувати";
+"Close" = "Закрити";
+
+// MARK: - Language
+"Language" = "Мова";
+"English" = "English";
+"Українська" = "Українська";
+
+// MARK: - Information
+"Information" = "Інформація";
+"Version" = "Версія";
+"Build" = "Збірка";
+"Some settings may require restarting the app to fully take effect." = "Деякі налаштування можуть потребувати перезапуску додатку для повного застосування.";
+
+// MARK: - Exchange Rate View
+"Exchange Rates in IF" = "Курси валют в ІФ";
+"Currency:" = "Валюта:";
+"History" = "Історія";
+"Best Rates" = "Найкращі курси";
+"Best to sell at" = "Найкраще продати в";
+"Best to buy at" = "Найкраще купити в";
+"No data" = "Немає даних";
+"Rate Comparison" = "Порівняння курсів";
+"Bank" = "Банк";
+"Buy" = "Купівля";
+"Sell" = "Продаж";
+"Spread" = "Спред";
+"Detailed Information" = "Детальна інформація";
+"Loading exchange rates..." = "Завантаження курсів валют...";
+"Error" = "Помилка";
+"Try Again" = "Спробувати знову";
+"Updated:" = "Оновлено:";
+"Not specified" = "Не вказано";
+"Not updated" = "Не оновлено";
+"Exchange rate data is provided for informational purposes only and may differ from actual values." = "Дані про курси валют надаються лише для інформаційних цілей і можуть відрізнятися від фактичних значень.";
+
+// MARK: - Historical View
+"Historical %@ Rates" = "Історія курсу %@";
+"Period" = "Період";
+"1 day" = "1 день";
+"3 days" = "3 дні";
+"7 days" = "7 днів";
+"30 days" = "30 днів";
+"90 days" = "90 днів";
+"180 days" = "180 днів";
+"360 days" = "360 днів";
+"Banks" = "Банки";
+"Rate History" = "Історія курсу";
+"No data available for the selected period" = "Немає даних за вибраний період";
+"Period:" = "Період:";
+"No data" = "Немає даних";
+"Chart history is available in iOS 16+" = "Історія графіків доступна в iOS 16+";
+"Initial rates:" = "Початкові курси:";
+"Latest rates:" = "Останні курси:";
