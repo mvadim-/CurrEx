@@ -51,6 +51,7 @@ struct HistoricalChartView: View {
                                 x: .value("Дата", dataPoint.date),
                                 y: .value("Курс", bankRate.buy)
                             )
+                            .foregroundStyle(colors[bank, default: .gray])
                             .foregroundStyle(by: .value("Bank Buy", "\(bank) (Buy)"))
                             .symbol {
                                 Circle()
@@ -71,6 +72,7 @@ struct HistoricalChartView: View {
                                 x: .value("Дата", dataPoint.date),
                                 y: .value("Курс", bankRate.sell)
                             )
+                            .foregroundStyle(colors[bank, default: .gray])
                             .foregroundStyle(by: .value("Bank Sell", "\(bank) (Sell)"))
                             .symbol {
                                 Circle()
@@ -80,7 +82,6 @@ struct HistoricalChartView: View {
                             .interpolationMethod(.linear) // Change to straight lines
                             .lineStyle(StrokeStyle(lineWidth: 2, dash: [4, 2]))
                             .opacity(0.7)
-                            .foregroundStyle(colors[bank, default: .gray])
                         }
                     }
                 }
@@ -94,7 +95,7 @@ struct HistoricalChartView: View {
                         x: .value("Дата", selectedPoint.date),
                         y: .value("Курс", rateValue)
                     )
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.gray)
                     .symbolSize(CGSize(width: 12, height: 12))
                     .annotation(position: .top) {
                         VStack(alignment: .center, spacing: 4) {
@@ -106,7 +107,7 @@ struct HistoricalChartView: View {
                                 .font(.caption)
                                 .fontWeight(.bold)
                                 
-                            Text(selectedPoint.date, format: .dateTime.day().month().year())
+                            Text(selectedPoint.date, format:  .dateTime.day().month().year())
                                 .font(.caption2)
                         }
                         .padding(8)
