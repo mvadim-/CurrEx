@@ -42,11 +42,11 @@ struct ExchangeRateView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack(spacing: 16) {
-                        Button(action: {
-                            showingHistoricalView = true
-                        }) {
-                            Image(systemName: "chart.line.uptrend.xyaxis")
-                        }
+//                        Button(action: {
+//                            showingHistoricalView = true
+//                        }) {
+//                            Image(systemName: "chart.line.uptrend.xyaxis")
+//                        }
                         
                         Button(action: {
                             showingSettings = true
