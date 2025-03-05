@@ -2,10 +2,13 @@
 //  HistoricalChartView.swift
 //  CurrEx
 //
+//  Created for CurrEx on 05.03.2025.
+//
 
 import SwiftUI
 import Charts
 
+/// Chart view for displaying historical exchange rates
 struct HistoricalChartView: View {
     let historicalData: [HistoricalRateDataPoint]
     let visibleBanks: Set<String>
@@ -23,9 +26,10 @@ struct HistoricalChartView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Історія курсів")
+            Text("Rate History")
                 .font(.headline)
                 .fontWeight(.semibold)
+                .foregroundColor(AppColors.text)
             
             if #available(iOS 16.0, *) {
                 modernChartView
@@ -33,12 +37,10 @@ struct HistoricalChartView: View {
                 legacyChartView
             }
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .cardStyle()
     }
     
+    /// Modern chart view using the Charts framework (iOS 16+)
     @available(iOS 16.0, *)
     private var modernChartView: some View {
         VStack {
@@ -48,8 +50,8 @@ struct HistoricalChartView: View {
                     ForEach(historicalData) { dataPoint in
                         if let bankRate = dataPoint.bankRates[bank], bankRate.buy > 0 {
                             LineMark(
-                                x: .value("Дата", dataPoint.date),
-                                y: .value("Курс", bankRate.buy)
+                                x: .value("Date", dataPoint.date),
+                                y: .value("Rate", bankRate.buy)
                             )
                             .foregroundStyle(colors[bank, default: .gray])
                             .foregroundStyle(by: .value("Bank Buy", "\(bank) (Buy)"))
@@ -69,8 +71,8 @@ struct HistoricalChartView: View {
                     ForEach(historicalData) { dataPoint in
                         if let bankRate = dataPoint.bankRates[bank], bankRate.sell > 0 {
                             LineMark(
-                                x: .value("Дата", dataPoint.date),
-                                y: .value("Курс", bankRate.sell)
+                                x: .value("Date", dataPoint.date),
+                                y: .value("Rate", bankRate.sell)
                             )
                             .foregroundStyle(colors[bank, default: .gray])
                             .foregroundStyle(by: .value("Bank Sell", "\(bank) (Sell)"))
@@ -92,28 +94,31 @@ struct HistoricalChartView: View {
                     let rateValue = isShowingSellRate ? bankRate.sell : bankRate.buy
                     
                     PointMark(
-                        x: .value("Дата", selectedPoint.date),
-                        y: .value("Курс", rateValue)
+                        x: .value("Date", selectedPoint.date),
+                        y: .value("Rate", rateValue)
                     )
-                    .foregroundStyle(.gray)
+                    .foregroundStyle(.gray.opacity(0.7))
                     .symbolSize(CGSize(width: 12, height: 12))
                     .annotation(position: .top) {
                         VStack(alignment: .center, spacing: 4) {
                             Text(selectedBankName)
                                 .font(.caption)
                                 .fontWeight(.bold)
+                                .foregroundColor(AppColors.text)
                             
                             Text(String(format: "%.2f ₴", rateValue))
                                 .font(.caption)
                                 .fontWeight(.bold)
+                                .foregroundColor(AppColors.text)
                                 
-                            Text(selectedPoint.date, format:  .dateTime.day().month().year())
+                            Text(selectedPoint.date, format: .dateTime.day().month().year())
                                 .font(.caption2)
+                                .foregroundColor(AppColors.secondaryText)
                         }
                         .padding(8)
                         .background(
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white)
+                                .fill(AppColors.background)
                                 .shadow(radius: 2)
                         )
                     }
@@ -122,10 +127,24 @@ struct HistoricalChartView: View {
             .chartXAxis {
                 AxisMarks { value in
                     AxisGridLine()
+                        .foregroundStyle(AppColors.dividerColor.opacity(0.5))
                     AxisValueLabel {
                         if let date = value.as(Date.self) {
                             Text(date, format: .dateTime.day().month())
                                 .font(.caption)
+                                .foregroundColor(AppColors.secondaryText)
+                        }
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [5, 5]))
+                        .foregroundStyle(AppColors.dividerColor.opacity(0.5))
+                    AxisValueLabel {
+                        if let doubleValue = value.as(Double.self) {
+                            Text(String(format: "%.1f", doubleValue))
+                                .foregroundColor(AppColors.secondaryText)
                         }
                     }
                 }
@@ -156,6 +175,7 @@ struct HistoricalChartView: View {
         }
     }
     
+    /// Helper method to find closest data point to the tap location
     @available(iOS 16.0, *)
     private func findClosestDataPoint(at xPosition: CGFloat, y yPosition: CGFloat, in proxy: ChartProxy, with geometry: GeometryProxy) {
         guard !historicalData.isEmpty, !visibleBanks.isEmpty else { return }
@@ -200,30 +220,35 @@ struct HistoricalChartView: View {
         isShowingSellRate = isSellRate
     }
     
+    /// Legacy chart view for iOS versions earlier than 16
     private var legacyChartView: some View {
         VStack(spacing: 16) {
-            Text("Графік історії курсів доступний в iOS 16+")
+            Text("Chart history is available in iOS 16+")
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(AppColors.secondaryText)
                 .multilineTextAlignment(.center)
             
             if let firstDataPoint = historicalData.first, let lastDataPoint = historicalData.last {
                 VStack(spacing: 12) {
-                    Text("Початковий курс:")
+                    Text("Initial rates:")
                         .font(.subheadline)
                         .fontWeight(.semibold)
+                        .foregroundColor(AppColors.text)
                     
                     ForEach(Array(visibleBanks), id: \.self) { bank in
                         if let bankRate = firstDataPoint.bankRates[bank] {
                             HStack {
                                 Text(bank)
                                     .font(.subheadline)
+                                    .foregroundColor(AppColors.text)
                                 
                                 Spacer()
                                 
                                 VStack(alignment: .trailing) {
-                                    Text("Купівля: \(String(format: "%.2f", bankRate.buy)) ₴")
-                                    Text("Продаж: \(String(format: "%.2f", bankRate.sell)) ₴")
+                                    Text("Buy: \(String(format: "%.2f", bankRate.buy)) ₴")
+                                        .foregroundColor(AppColors.buyColor)
+                                    Text("Sell: \(String(format: "%.2f", bankRate.sell)) ₴")
+                                        .foregroundColor(AppColors.sellColor)
                                 }
                                 .font(.caption)
                             }
@@ -231,9 +256,10 @@ struct HistoricalChartView: View {
                         }
                     }
                     
-                    Text("Останній курс:")
+                    Text("Latest rates:")
                         .font(.subheadline)
                         .fontWeight(.semibold)
+                        .foregroundColor(AppColors.text)
                         .padding(.top, 8)
                     
                     ForEach(Array(visibleBanks), id: \.self) { bank in
@@ -241,12 +267,15 @@ struct HistoricalChartView: View {
                             HStack {
                                 Text(bank)
                                     .font(.subheadline)
+                                    .foregroundColor(AppColors.text)
                                 
                                 Spacer()
                                 
                                 VStack(alignment: .trailing) {
-                                    Text("Купівля: \(String(format: "%.2f", bankRate.buy)) ₴")
-                                    Text("Продаж: \(String(format: "%.2f", bankRate.sell)) ₴")
+                                    Text("Buy: \(String(format: "%.2f", bankRate.buy)) ₴")
+                                        .foregroundColor(AppColors.buyColor)
+                                    Text("Sell: \(String(format: "%.2f", bankRate.sell)) ₴")
+                                        .foregroundColor(AppColors.sellColor)
                                 }
                                 .font(.caption)
                             }
@@ -255,111 +284,66 @@ struct HistoricalChartView: View {
                     }
                 }
                 .padding()
-                .background(Color(UIColor.systemGray6))
+                .background(AppColors.secondaryBackground)
                 .cornerRadius(8)
             }
         }
     }
 }
 
-struct LegendView: View {
-    let visibleBanks: Set<String>
-    let toggleAction: (String) -> Void
+#Preview(traits: .sizeThatFitsLayout) {
+    let date = Date()
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "yyyy-MM-dd"
     
-    private let colors: [String: Color] = [
-        "Bestobmin": .green,
-        "PrivatBank": .blue,
-        "Raiffeisen": .orange
+    let sampleData = [
+        HistoricalRateDataPoint(
+            date: date.addingTimeInterval(-86400 * 4),
+            bankRates: [
+                "PrivatBank": (buy: 38.5, sell: 39.2),
+                "Raiffeisen": (buy: 38.3, sell: 38.9),
+                "Bestobmin": (buy: 38.7, sell: 39.1)
+            ]
+        ),
+        HistoricalRateDataPoint(
+            date: date.addingTimeInterval(-86400 * 3),
+            bankRates: [
+                "PrivatBank": (buy: 38.6, sell: 39.3),
+                "Raiffeisen": (buy: 38.4, sell: 39.0),
+                "Bestobmin": (buy: 38.8, sell: 39.2)
+            ]
+        ),
+        HistoricalRateDataPoint(
+            date: date.addingTimeInterval(-86400 * 2),
+            bankRates: [
+                "PrivatBank": (buy: 38.7, sell: 39.4),
+                "Raiffeisen": (buy: 38.5, sell: 39.1),
+                "Bestobmin": (buy: 38.9, sell: 39.3)
+            ]
+        ),
+        HistoricalRateDataPoint(
+            date: date.addingTimeInterval(-86400),
+            bankRates: [
+                "PrivatBank": (buy: 38.8, sell: 39.5),
+                "Raiffeisen": (buy: 38.6, sell: 39.2),
+                "Bestobmin": (buy: 39.0, sell: 39.4)
+            ]
+        ),
+        HistoricalRateDataPoint(
+            date: date,
+            bankRates: [
+                "PrivatBank": (buy: 38.9, sell: 39.6),
+                "Raiffeisen": (buy: 38.7, sell: 39.3),
+                "Bestobmin": (buy: 39.1, sell: 39.5)
+            ]
+        )
     ]
     
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Банки")
-                .font(.headline)
-                .fontWeight(.semibold)
-            
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(["Bestobmin", "PrivatBank", "Raiffeisen"], id: \.self) { bank in
-                    Button(action: { toggleAction(bank) }) {
-                        HStack(spacing: 8) {
-                            Image(systemName: visibleBanks.contains(bank) ? "checkmark.square.fill" : "square")
-                                .foregroundColor(visibleBanks.contains(bank) ? colors[bank, default: .gray] : .gray)
-                            
-                            Text(bank)
-                                .foregroundColor(.primary)
-                            
-                            Spacer()
-                            
-                            HStack(spacing: 8) {
-                                HStack(spacing: 4) {
-                                    Circle()
-                                        .fill(colors[bank, default: .gray])
-                                        .frame(width: 8, height: 8)
-                                    Text("Купівля")
-                                        .font(.caption)
-                                }
-                                
-                                HStack(spacing: 4) {
-                                    Circle()
-                                        .stroke(colors[bank, default: .gray], lineWidth: 2)
-                                        .frame(width: 8, height: 8)
-                                    Text("Продаж")
-                                        .font(.caption)
-                                }
-                            }
-                        }
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    
-                    if bank != "Raiffeisen" {
-                        Divider()
-                    }
-                }
-            }
-            .padding()
-            .background(Color(UIColor.systemGray6))
-            .cornerRadius(8)
-        }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-    }
-}
-
-struct PeriodSelectorView: View {
-    @Binding var selectedPeriod: PeriodType
-    let loadAction: () -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Період")
-                .font(.headline)
-                .fontWeight(.semibold)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(PeriodType.allCases) { period in
-                        Button(action: {
-                            selectedPeriod = period
-                            loadAction()
-                        }) {
-                            Text(period.displayName)
-                                .font(.subheadline)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .background(selectedPeriod == period ? Color.blue : Color(UIColor.systemGray6))
-                                .foregroundColor(selectedPeriod == period ? .white : .primary)
-                                .cornerRadius(8)
-                        }
-                    }
-                }
-                .padding(.vertical, 4)
-            }
-        }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-    }
+    return HistoricalChartView(
+        historicalData: sampleData,
+        visibleBanks: ["PrivatBank", "Raiffeisen", "Bestobmin"],
+        yDomain: 38...40
+    )
+    .padding()
+    .background(AppColors.groupedBackground)
 }

@@ -7,13 +7,30 @@
 
 import SwiftUI
 
+/// Service container for dependency injection
+class ServiceContainer {
+    static let shared = ServiceContainer()
+    
+    /// Exchange rates API service for current rates
+    lazy var exchangeRatesService: ExchangeRatesServiceProtocol = ExchangeRatesService()
+    
+    /// Exchange rates API service for historical data
+    lazy var historicalExchangeRatesService: HistoricalExchangeRatesServiceProtocol = HistoricalExchangeRatesService()
+    
+    private init() {}
+}
+
 // MARK: - App Entry Point
 @main
 struct CurrExApp: App {
     var body: some Scene {
         WindowGroup {
-            ExchangeRateView()
-                .accentColor(Color.blue)
+            ExchangeRateView(
+                viewModel: ExchangeRateViewModel(
+                    service: ServiceContainer.shared.exchangeRatesService
+                )
+            )
+            .preferredColorScheme(.none) // Respect system color scheme
         }
     }
 }

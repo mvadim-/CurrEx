@@ -2,23 +2,30 @@
 //  LoadingErrorViews.swift
 //  CurrEx
 //
+//  Created for CurrEx on 05.03.2025.
+//
 
 import SwiftUI
 
+/// Loading state view
 struct LoadingView: View {
     var body: some View {
         VStack {
             ProgressView()
                 .scaleEffect(1.5)
             
-            Text("Завантаження курсів валют...")
+            Text("Loading exchange rates...")
                 .font(.headline)
-                .foregroundColor(.gray)
+                .foregroundColor(AppColors.secondaryText)
                 .padding(.top, 16)
         }
+        .padding()
+        .background(AppColors.background)
+        .cornerRadius(12)
     }
 }
 
+/// Error state view with retry action
 struct ErrorView: View {
     let message: String
     let retryAction: () -> Void
@@ -29,7 +36,7 @@ struct ErrorView: View {
                 .font(.system(size: 50))
                 .foregroundColor(.red)
             
-            Text("Помилка")
+            Text("Error")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(.red)
@@ -38,39 +45,44 @@ struct ErrorView: View {
                 .font(.body)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
+                .foregroundColor(AppColors.text)
             
             Button(action: retryAction) {
-                Text("Спробувати знову")
+                Text("Try Again")
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
                     .padding(.vertical, 12)
                     .padding(.horizontal, 24)
-                    .background(Color.blue)
+                    .background(AppColors.accentColor)
                     .cornerRadius(10)
             }
         }
         .padding()
+        .background(AppColors.background)
+        .cornerRadius(12)
     }
 }
 
+/// Last updated timestamp view
 struct LastUpdatedView: View {
     let timestamp: String
     
     var body: some View {
         HStack {
             Spacer()
-            Text("Оновлено: \(timestamp)")
+            Text("Updated: \(timestamp)")
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(AppColors.secondaryText)
         }
     }
 }
 
+/// Disclaimer text view
 struct DisclaimerView: View {
     var body: some View {
-        Text("Дані курсів валют надаються лише в інформаційних цілях та можуть відрізнятися від актуальних значень.")
+        Text("Exchange rate data is provided for informational purposes only and may differ from actual values.")
             .font(.caption)
-            .foregroundColor(.gray)
+            .foregroundColor(AppColors.secondaryText)
             .multilineTextAlignment(.center)
             .padding(.vertical)
     }
@@ -79,21 +91,15 @@ struct DisclaimerView: View {
 #Preview(traits: .sizeThatFitsLayout) {
     VStack(spacing: 30) {
         LoadingView()
-            .padding()
-            .background(Color.white)
-            .cornerRadius(12)
             
-        ErrorView(message: "Не вдалося завантажити дані. Перевірте підключення до інтернету.") {
+        ErrorView(message: "Failed to load data. Please check your internet connection.") {
             print("Retry tapped")
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(12)
             
         LastUpdatedView(timestamp: "25.02.2025 15:30")
         
         DisclaimerView()
     }
     .padding()
-    .background(Color(UIColor.systemGray6))
+    .background(AppColors.groupedBackground)
 }

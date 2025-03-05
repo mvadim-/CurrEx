@@ -2,30 +2,43 @@
 //  HistoricalRatesViewModel.swift
 //  CurrEx
 //
+//  Created for CurrEx on 05.03.2025.
+//
 
 import Foundation
 import SwiftUI
 
 // MARK: - Historical Data View Model
-class HistoricalRatesViewModel: ObservableObject {
+final class HistoricalRatesViewModel: ObservableObject {
+    // Published properties for UI updates
     @Published var historicalData: [HistoricalRateDataPoint] = []
     @Published var isLoading = true
     @Published var errorMessage: String? = nil
-    @Published var selectedPeriod: PeriodType = .day1
+    @Published var selectedPeriod: PeriodType = .day1 // Changed default to 1 day
     @Published var selectedCurrency: CurrencyType = .usd
     @Published var visibleBanks: Set<String> = ["Bestobmin", "PrivatBank", "Raiffeisen"]
     @Published var lastUpdated: String = ""
     
-    private let service = HistoricalExchangeRatesService()
+    // Dependencies
+    private let service: HistoricalExchangeRatesServiceProtocol
     private let dateFormatter: DateFormatter
     
-    init() {
+    // MARK: - Initialization
+    
+    /// Initializes the view model with a service dependency
+    /// - Parameter service: Service that provides historical exchange rate data
+    init(service: HistoricalExchangeRatesServiceProtocol = ServiceContainer.shared.historicalExchangeRatesService) {
+        self.service = service
+        
         dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .medium
         dateFormatter.timeStyle = .short
         dateFormatter.locale = Locale(identifier: "uk_UA")
     }
     
+    // MARK: - Data Loading
+    
+    /// Loads historical exchange rate data
     func loadData() {
         isLoading = true
         errorMessage = nil
@@ -36,23 +49,33 @@ class HistoricalRatesViewModel: ObservableObject {
                     for: selectedCurrency.rawValue,
                     period: selectedPeriod.rawValue
                 )
-                lastUpdated = formatCurrentTime()
+                lastUpdated = Formatters.formatCurrentDateTime()
                 
                 // Ensure we have valid banks to display
                 updateVisibleBanks()
                 
                 isLoading = false
             } catch {
-                errorMessage = "Помилка завантаження історичних даних: \(error.localizedDescription)"
-                isLoading = false
+                handleError(error)
             }
         }
     }
     
-    private func formatCurrentTime() -> String {
-        return dateFormatter.string(from: Date())
+    // MARK: - Helper Methods
+    
+    /// Handles errors from data loading
+    /// - Parameter error: Error that occurred
+    private func handleError(_ error: Error) {
+        if let networkError = error as? NetworkError {
+            errorMessage = NSLocalizedString("Historical data loading error: \(networkError.localizedDescription)", comment: "")
+        } else {
+            errorMessage = NSLocalizedString("Historical data loading error: \(error.localizedDescription)", comment: "")
+        }
+        isLoading = false
     }
     
+    /// Toggles visibility of a bank in the chart
+    /// - Parameter bank: Bank name to toggle
     func toggleBank(_ bank: String) {
         if visibleBanks.contains(bank) {
             visibleBanks.remove(bank)
@@ -61,11 +84,14 @@ class HistoricalRatesViewModel: ObservableObject {
         }
     }
     
+    /// Checks if a bank is currently visible
+    /// - Parameter bank: Bank name to check
+    /// - Returns: True if bank is visible
     func isBankVisible(_ bank: String) -> Bool {
         return visibleBanks.contains(bank)
     }
     
-    // Update visible banks based on available data
+    /// Updates visible banks based on available data
     private func updateVisibleBanks() {
         if historicalData.isEmpty {
             return
@@ -89,9 +115,11 @@ class HistoricalRatesViewModel: ObservableObject {
         }
     }
     
+    /// Gets the date range covered by historical data
+    /// - Returns: Formatted date range string
     func getDateRange() -> String {
         guard let firstDate = historicalData.first?.date, let lastDate = historicalData.last?.date else {
-            return "Немає даних"
+            return NSLocalizedString("No data", comment: "")
         }
         
         let startDateString = dateFormatter.string(from: firstDate)
@@ -100,6 +128,8 @@ class HistoricalRatesViewModel: ObservableObject {
         return "\(startDateString) - \(endDateString)"
     }
     
+    /// Gets the y-axis domain range for charts
+    /// - Returns: Closed range suitable for chart y-axis
     func getYDomain() -> ClosedRange<Double> {
         // Default domain in case of errors
         let defaultDomain: ClosedRange<Double> = 0...50

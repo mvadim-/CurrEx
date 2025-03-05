@@ -2,19 +2,23 @@
 //  ChartView.swift
 //  CurrEx
 //
+//  Created for CurrEx on 05.03.2025.
+//
 
 import SwiftUI
 import Charts
 
+/// Chart view for displaying exchange rates
 struct RateChartView: View {
     let rates: [BankRateViewModel]
     let yDomain: ClosedRange<Double>
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Порівняння курсів")
+            Text("Rate Comparison")
                 .font(.headline)
                 .fontWeight(.semibold)
+                .foregroundColor(AppColors.text)
             
             if #available(iOS 16.0, *) {
                 modernChartView
@@ -22,38 +26,36 @@ struct RateChartView: View {
                 legacyChartView
             }
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .cardStyle()
     }
     
+    /// Modern chart view using the Charts framework (iOS 16+)
     @available(iOS 16.0, *)
     private var modernChartView: some View {
         Chart {
             ForEach(rates) { rate in
                 BarMark(
-                    x: .value("Банк", rate.name),
-                    y: .value("Курс", rate.buyRate)
+                    x: .value("Bank", rate.name),
+                    y: .value("Rate", rate.buyRate)
                 )
-                .foregroundStyle(Color.green)
-                .position(by: .value("Тип", "Купівля"), axis: .horizontal)
+                .foregroundStyle(AppColors.buyColor)
+                .position(by: .value("Type", "Buy"), axis: .horizontal)
                 .annotation(position: .top) {
                     Text(String(format: "%.2f", rate.buyRate))
                         .font(.caption2)
-                        .foregroundColor(.black)
+                        .foregroundColor(AppColors.text)
                 }
 
                 BarMark(
-                    x: .value("Банк", rate.name),
-                    y: .value("Курс", rate.sellRate)
+                    x: .value("Bank", rate.name),
+                    y: .value("Rate", rate.sellRate)
                 )
-                .foregroundStyle(Color.blue)
-                .position(by: .value("Тип", "Продаж"), axis: .horizontal)
+                .foregroundStyle(AppColors.sellColor)
+                .position(by: .value("Type", "Sell"), axis: .horizontal)
                 .annotation(position: .top) {
                     Text(String(format: "%.2f", rate.sellRate))
                         .font(.caption2)
-                        .foregroundColor(.black)
+                        .foregroundColor(AppColors.text)
                 }
             }
         }
@@ -67,10 +69,23 @@ struct RateChartView: View {
                         Text(label)
                             .rotationEffect(.degrees(-90))
                             .offset(x: 0, y: 8)
+                            .foregroundColor(AppColors.text)
                     }
                 }
                 AxisTick()
                 AxisGridLine()
+            }
+        }
+        .chartYAxis {
+            AxisMarks { value in
+                AxisValueLabel {
+                    if let doubleValue = value.as(Double.self) {
+                        Text(String(format: "%.1f", doubleValue))
+                            .foregroundColor(AppColors.secondaryText)
+                    }
+                }
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [5, 5]))
+                    .foregroundStyle(AppColors.dividerColor.opacity(0.5))
             }
         }
         .frame(height: 250)
@@ -78,11 +93,12 @@ struct RateChartView: View {
         .chartLegend(position: .top, alignment: .center)
     }
     
+    /// Legacy chart view for iOS versions earlier than 16
     private var legacyChartView: some View {
         VStack(spacing: 16) {
-            Text("Курси в графічному вигляді доступні в iOS 16+")
+            Text("Chart view is available in iOS 16+")
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(AppColors.secondaryText)
                 .multilineTextAlignment(.center)
             
             HStack(alignment: .bottom, spacing: 12) {
@@ -97,7 +113,7 @@ struct RateChartView: View {
                                 .padding(.vertical, 2)
                         }
                         .frame(width: 30, height: CGFloat(rate.sellRate * 5))
-                        .background(Color.blue)
+                        .background(AppColors.sellColor)
                         .cornerRadius(4)
                         
                         VStack {
@@ -109,11 +125,12 @@ struct RateChartView: View {
                                 .padding(.vertical, 2)
                         }
                         .frame(width: 30, height: CGFloat(rate.buyRate * 5))
-                        .background(Color.green)
+                        .background(AppColors.buyColor)
                         .cornerRadius(4)
                         
                         Text(rate.name)
                             .font(.caption)
+                            .foregroundColor(AppColors.text)
                             .fixedSize(horizontal: false, vertical: true)
                             .multilineTextAlignment(.center)
                             .frame(width: 70)
@@ -125,18 +142,20 @@ struct RateChartView: View {
             HStack(spacing: 16) {
                 HStack(spacing: 8) {
                     Rectangle()
-                        .fill(Color.green)
+                        .fill(AppColors.buyColor)
                         .frame(width: 12, height: 12)
-                    Text("Купівля")
+                    Text("Buy")
                         .font(.caption)
+                        .foregroundColor(AppColors.text)
                 }
                 
                 HStack(spacing: 8) {
                     Rectangle()
-                        .fill(Color.blue)
+                        .fill(AppColors.sellColor)
                         .frame(width: 12, height: 12)
-                    Text("Продаж")
+                    Text("Sell")
                         .font(.caption)
+                        .foregroundColor(AppColors.text)
                 }
             }
         }
@@ -153,5 +172,5 @@ struct RateChartView: View {
         yDomain: 38...40
     )
     .padding()
-    .background(Color(UIColor.systemGray6))
+    .background(AppColors.groupedBackground)
 }

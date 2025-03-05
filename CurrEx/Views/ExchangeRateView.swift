@@ -2,19 +2,27 @@
 //  ExchangeRateView.swift
 //  CurrEx
 //
+//  Created for CurrEx on 05.03.2025.
+//
 
 import SwiftUI
 
 // MARK: - Main View
 struct ExchangeRateView: View {
-    @StateObject private var viewModel = ExchangeRateViewModel()
+    @StateObject private var viewModel: ExchangeRateViewModel
     @State private var currentTab = 0
     @State private var showingHistoricalView = false
+    
+    /// Initializes the view with a view model
+    /// - Parameter viewModel: View model for exchange rates
+    init(viewModel: ExchangeRateViewModel = ExchangeRateViewModel()) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
     
     var body: some View {
         NavigationView {
             ZStack {
-                Color(UIColor.systemGray6).edgesIgnoringSafeArea(.all)
+                AppColors.groupedBackground.edgesIgnoringSafeArea(.all)
                 
                 if viewModel.isLoading {
                     LoadingView()
@@ -26,7 +34,7 @@ struct ExchangeRateView: View {
                     mainContentView
                 }
             }
-            .navigationTitle("Курс валют в Україні")
+            .navigationTitle("Exchange Rates in IF")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
@@ -34,15 +42,23 @@ struct ExchangeRateView: View {
                     }) {
 //                        HStack(spacing: 4) {
 //                            Image(systemName: "chart.line.uptrend.xyaxis")
-//                            Text("Історія")
+//                            Text("History")
 //                        }
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        viewModel.loadDataForAllCurrencies()
+                    }) {
+                        Image(systemName: "arrow.clockwise")
                     }
                 }
             }
             .sheet(isPresented: $showingHistoricalView) {
                 NavigationView {
                     HistoricalRateView(currency: viewModel.selectedCurrency)
-                        .navigationBarItems(trailing: Button("Закрити") {
+                        .navigationBarItems(trailing: Button("Close") {
                             showingHistoricalView = false
                         })
                 }
@@ -56,17 +72,32 @@ struct ExchangeRateView: View {
     // MARK: - Subviews
     private var mainContentView: some View {
         VStack {
-            TabView(selection: $currentTab) {
-                currencyView(for: .usd)
-                    .tag(0)
-                
-                currencyView(for: .eur)
-                    .tag(1)
-            }
-            .tabViewStyle(PageTabViewStyle())
-            .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
-            .onChange(of: currentTab) { newValue in
-                viewModel.selectedCurrency = newValue == 0 ? .usd : .eur
+            if #available(iOS 17.0, *) {
+                TabView(selection: $currentTab) {
+                    currencyView(for: .usd)
+                        .tag(0)
+                    
+                    currencyView(for: .eur)
+                        .tag(1)
+                }
+                .tabViewStyle(PageTabViewStyle())
+                .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
+                .onChange(of: currentTab) {
+                    viewModel.selectedCurrency = currentTab == 0 ? .usd : .eur
+                }
+            } else {
+                TabView(selection: $currentTab) {
+                    currencyView(for: .usd)
+                        .tag(0)
+                    
+                    currencyView(for: .eur)
+                        .tag(1)
+                }
+                .tabViewStyle(PageTabViewStyle())
+                .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
+                .onChange(of: currentTab) { newValue in
+                    viewModel.selectedCurrency = newValue == 0 ? .usd : .eur
+                }
             }
         }
     }
@@ -75,8 +106,9 @@ struct ExchangeRateView: View {
         ScrollView {
             LazyVStack(spacing: 16) {
                 HStack {
-                    Text("Валюта: \(currency.displayName)")
+                    Text("Currency: \(currency.displayName)")
                         .font(.headline)
+                        .foregroundColor(AppColors.text)
                     
                     Spacer()
                     
@@ -85,12 +117,12 @@ struct ExchangeRateView: View {
                     }) {
                         HStack(spacing: 4) {
                             Image(systemName: "chart.line.uptrend.xyaxis")
-                            Text("Історія")
+                            Text("History")
                         }
                         .font(.subheadline)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(Color.blue)
+                        .background(AppColors.accentColor)
                         .foregroundColor(.white)
                         .cornerRadius(8)
                     }
@@ -117,8 +149,4 @@ struct ExchangeRateView: View {
             viewModel.loadData(for: currency)
         }
     }
-}
-
-#Preview {
-    ExchangeRateView()
 }

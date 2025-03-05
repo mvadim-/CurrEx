@@ -2,55 +2,38 @@
 //  CurrencyType.swift
 //  CurrEx
 //
+//  Created for CurrEx on 05.03.2025.
+//
 
 import Foundation
 import Combine
 import SwiftUI
 
 // MARK: - Currency Type
+/// Supported currency types in the application
 enum CurrencyType: String, CaseIterable, Identifiable {
     case usd = "USD"
     case eur = "EUR"
     
     var id: String { self.rawValue }
     
+    /// User-facing display name
     var displayName: String {
         switch self {
         case .usd: return "USD"
         case .eur: return "EUR"
         }
     }
-}
-
-// Add compatibility with SwiftUI onChange on iOS 14
-#if swift(<5.5)
-extension View {
-    func onChange<V>(of value: V, perform action: @escaping (V) -> Void) -> some View where V: Equatable {
-        modifier(ChangeModifier(value: value, action: action))
+    
+    /// Symbol for the currency
+    var symbol: String {
+        switch self {
+        case .usd: return "$"
+        case .eur: return "€"
+        }
     }
 }
 
-struct ChangeModifier<Value>: ViewModifier where Value: Equatable {
-    var value: Value
-    var action: (Value) -> Void
-    
-    @State private var oldValue: Value
-    
-    init(value: Value, action: @escaping (Value) -> Void) {
-        self.value = value
-        self.action = action
-        self._oldValue = State(initialValue: value)
-    }
-    
-    func body(content: Content) -> some View {
-        content
-            .onAppear { oldValue = value }
-            .onReceive(Just(value)) { newValue in
-                if newValue != oldValue {
-                    action(newValue)
-                    oldValue = newValue
-                }
-            }
-    }
-}
-#endif
+// Note: Custom onChange backward compatibility code has been removed
+// iOS 14+ has native onChange support, and iOS 17+ uses a new API format
+// See ExchangeRateView+iOS17.swift for cross-version compatible implementation

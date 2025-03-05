@@ -2,12 +2,15 @@
 //  ExchangeRateViewModel.swift
 //  CurrEx
 //
+//  Created for CurrEx on 05.03.2025.
+//
 
 import Foundation
 import SwiftUI
 
 // MARK: - Main Content View Model
-class ExchangeRateViewModel: ObservableObject {
+final class ExchangeRateViewModel: ObservableObject {
+    // Published properties for UI updates
     @Published var ratesData: [CurrencyType: [BankRateViewModel]] = [:]
     @Published var isLoading = true
     @Published var errorMessage: String? = nil
@@ -15,10 +18,17 @@ class ExchangeRateViewModel: ObservableObject {
     @Published var selectedCurrency: CurrencyType = .usd
     @Published var lastUpdatedFromServer: [CurrencyType: String] = [:]
 
-    private let service = ExchangeRatesService()
+    // Dependencies
+    private let service: ExchangeRatesServiceProtocol
     private let dateFormatter: DateFormatter
     
-    init() {
+    // MARK: - Initialization
+    
+    /// Initializes the view model with a service dependency
+    /// - Parameter service: Service that provides exchange rate data
+    init(service: ExchangeRatesServiceProtocol = ServiceContainer.shared.exchangeRatesService) {
+        self.service = service
+        
         // Initialize date formatter once
         dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .medium
@@ -31,6 +41,10 @@ class ExchangeRateViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Data Loading
+    
+    /// Loads exchange rate data for a specific currency
+    /// - Parameter currency: Currency to load data for (defaults to selected currency)
     func loadData(for currency: CurrencyType? = nil) {
         let currencyToLoad = currency ?? selectedCurrency
         isLoading = true
@@ -51,12 +65,12 @@ class ExchangeRateViewModel: ObservableObject {
                 
                 isLoading = false
             } catch {
-                errorMessage = "Помилка завантаження даних: \(error.localizedDescription)"
-                isLoading = false
+                handleError(error)
             }
         }
     }
     
+    /// Loads exchange rate data for all supported currencies
     func loadDataForAllCurrencies() {
         isLoading = true
         errorMessage = nil
@@ -78,16 +92,35 @@ class ExchangeRateViewModel: ObservableObject {
                 lastUpdated = formatCurrentTime()
                 isLoading = false
             } catch {
-                errorMessage = "Помилка завантаження даних: \(error.localizedDescription)"
-                isLoading = false
+                handleError(error)
             }
         }
     }
     
+    // MARK: - Helper Methods
+    
+    /// Formats the current time using the configured date formatter
+    /// - Returns: Formatted current time string
     private func formatCurrentTime() -> String {
         return dateFormatter.string(from: Date())
     }
     
+    /// Handles errors from data loading
+    /// - Parameter error: Error that occurred
+    private func handleError(_ error: Error) {
+        if let networkError = error as? NetworkError {
+            errorMessage = NSLocalizedString("Data loading error: \(networkError.localizedDescription)", comment: "")
+        } else {
+            errorMessage = NSLocalizedString("Data loading error: \(error.localizedDescription)", comment: "")
+        }
+        isLoading = false
+    }
+    
+    // MARK: - Data Access Methods
+    
+    /// Finds the best buy and sell rates for a given currency
+    /// - Parameter currency: Currency to find rates for
+    /// - Returns: Tuple containing best buy and sell rates
     func findBestRates(for currency: CurrencyType) -> (buy: BankRateViewModel?, sell: BankRateViewModel?) {
         guard let rates = ratesData[currency], !rates.isEmpty else { return (nil, nil) }
         
@@ -106,20 +139,30 @@ class ExchangeRateViewModel: ObservableObject {
         return (bestBuy, bestSell)
     }
     
+    /// Gets the y-axis domain range for charts
+    /// - Parameter currency: Currency to get domain for
+    /// - Returns: Closed range suitable for chart y-axis
     func getChartYDomain(for currency: CurrencyType) -> ClosedRange<Double> {
         guard let rates = ratesData[currency], !rates.isEmpty else { return 0...50 }
         
-        let minValue = (rates.map { $0.buyRate }.min() ?? 0) * 0.99
-        let maxValue = (rates.map { $0.sellRate }.max() ?? 50) * 1.01
+        let allRates = rates.flatMap { [$0.buyRate, $0.sellRate] }
+        let minValue = (allRates.min() ?? 0) * 0.99
+        let maxValue = (allRates.max() ?? 50) * 1.01
         
         return minValue...maxValue
     }
     
+    /// Gets all available rates for a given currency
+    /// - Parameter currency: Currency to get rates for
+    /// - Returns: Array of bank rates
     func getRates(for currency: CurrencyType) -> [BankRateViewModel] {
         return ratesData[currency] ?? []
     }
     
+    /// Gets the last update time from server for a given currency
+    /// - Parameter currency: Currency to get update time for
+    /// - Returns: Formatted update time string
     func getLastUpdatedFromServer(for currency: CurrencyType) -> String {
-        return lastUpdatedFromServer[currency] ?? "Не оновлено"
+        return lastUpdatedFromServer[currency] ?? NSLocalizedString("Not updated", comment: "")
     }
 }

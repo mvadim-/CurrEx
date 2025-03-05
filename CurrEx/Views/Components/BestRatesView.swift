@@ -2,67 +2,78 @@
 //  BestRatesView.swift
 //  CurrEx
 //
+//  Created for CurrEx on 05.03.2025.
+//
 
 import SwiftUI
 
+/// View showing the best buy and sell rates
 struct BestRatesView: View {
     let bestBuy: BankRateViewModel?
     let bestSell: BankRateViewModel?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Найкращі курси")
+            Text("Best Rates")
                 .font(.headline)
                 .fontWeight(.semibold)
+                .foregroundColor(AppColors.text)
             
             HStack(spacing: 12) {
+                // Best buy rates
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Найвигідніше продати у")
+                    Text("Best to sell at")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(AppColors.secondaryText)
                     
                     if let bestBuy = bestBuy {
                         Text("\(bestBuy.name): \(String(format: "%.2f", bestBuy.buyRate)) ₴")
                             .font(.title3)
                             .fontWeight(.bold)
-                            .foregroundColor(.green)
+                            .foregroundColor(AppColors.buyColor)
+                    } else {
+                        Text("No data")
+                            .font(.title3)
+                            .foregroundColor(AppColors.tertiaryText)
                     }
                 }
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.green.opacity(0.1))
+                .background(AppColors.buyColor.opacity(0.1))
                 .cornerRadius(10)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color.green.opacity(0.3), lineWidth: 1)
+                        .stroke(AppColors.buyColor.opacity(0.3), lineWidth: 1)
                 )
                 
+                // Best sell rates
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Найвигідніше купити у")
+                    Text("Best to buy at")
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(AppColors.secondaryText)
                     
                     if let bestSell = bestSell {
                         Text("\(bestSell.name): \(String(format: "%.2f", bestSell.sellRate)) ₴")
                             .font(.title3)
                             .fontWeight(.bold)
-                            .foregroundColor(.blue)
+                            .foregroundColor(AppColors.sellColor)
+                    } else {
+                        Text("No data")
+                            .font(.title3)
+                            .foregroundColor(AppColors.tertiaryText)
                     }
                 }
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.blue.opacity(0.1))
+                .background(AppColors.sellColor.opacity(0.1))
                 .cornerRadius(10)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                        .stroke(AppColors.sellColor.opacity(0.3), lineWidth: 1)
                 )
             }
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .cardStyle()
     }
 }
 
@@ -72,5 +83,5 @@ struct BestRatesView: View {
         bestSell: BankRateViewModel(name: "Raiffeisen", buyRate: 38.3, sellRate: 38.9, timestamp: "")
     )
     .padding()
-    .background(Color(UIColor.systemGray6))
+    .background(AppColors.groupedBackground)
 }

@@ -2,68 +2,82 @@
 //  DetailedInfoView.swift
 //  CurrEx
 //
+//  Created for CurrEx on 05.03.2025.
+//
 
 import SwiftUI
 
+/// View showing detailed exchange rates for all banks
 struct DetailedInfoView: View {
     let rates: [BankRateViewModel]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Детальна інформація")
+            Text("Detailed Information")
                 .font(.headline)
                 .fontWeight(.semibold)
+                .foregroundColor(AppColors.text)
             
             VStack(spacing: 0) {
+                // Table header
                 HStack {
-                    Text("Банк")
+                    Text("Bank")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .foregroundColor(AppColors.text)
                     
-                    Text("Купівля")
+                    Text("Buy")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .frame(width: 70, alignment: .trailing)
+                        .foregroundColor(AppColors.text)
                     
-                    Text("Продаж")
+                    Text("Sell")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .frame(width: 70, alignment: .trailing)
+                        .foregroundColor(AppColors.text)
                     
-                    Text("Спред")
+                    Text("Spread")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .frame(width: 70, alignment: .trailing)
+                        .foregroundColor(AppColors.text)
                 }
                 .padding(.vertical, 10)
                 .padding(.horizontal)
-                .background(Color(UIColor.systemGray5))
+                .background(AppColors.secondaryBackground)
                 
+                // Table rows
                 ForEach(rates) { rate in
                     HStack {
                         Text(rate.name)
                             .font(.subheadline)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .foregroundColor(AppColors.text)
                         
                         Text(String(format: "%.2f", rate.buyRate))
                             .font(.subheadline)
                             .frame(width: 70, alignment: .trailing)
+                            .foregroundColor(AppColors.buyColor)
                         
                         Text(String(format: "%.2f", rate.sellRate))
                             .font(.subheadline)
                             .frame(width: 70, alignment: .trailing)
+                            .foregroundColor(AppColors.sellColor)
                         
                         Text(String(format: "%.2f", rate.spread))
                             .font(.subheadline)
                             .frame(width: 70, alignment: .trailing)
+                            .foregroundColor(AppColors.secondaryText)
                     }
                     .padding(.vertical, 10)
                     .padding(.horizontal)
-                    .background(Color.white)
+                    .background(AppColors.background)
                     .overlay(
                         Divider()
-                            .background(Color(UIColor.systemGray4))
+                            .background(AppColors.dividerColor)
                             .offset(y: 20),
                         alignment: .bottom
                     )
@@ -72,13 +86,10 @@ struct DetailedInfoView: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color(UIColor.systemGray4), lineWidth: 1)
+                    .stroke(AppColors.dividerColor, lineWidth: 1)
             )
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .cardStyle()
     }
 }
 
@@ -91,5 +102,6 @@ struct DetailedInfoView: View {
         ]
     )
     .padding()
-    .background(Color(UIColor.systemGray6))
+    .background(AppColors.groupedBackground)
+    .preferredColorScheme(.dark) // Preview in dark mode
 }
