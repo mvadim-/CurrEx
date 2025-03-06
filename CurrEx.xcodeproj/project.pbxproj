@@ -75,6 +75,13 @@
 			);
 			target = 742F635A2D79B3CF00D9C3ED /* CurrExWidgetsExtension */;
 		};
+		744010BD2D79F61B007202CC /* Exceptions for "CurrEx" folder in "CurrExWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"/Localized: Localizable.strings",
+			);
+			target = 742F635A2D79B3CF00D9C3ED /* CurrExWidgetsExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -90,6 +97,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				741FE2892D704A9000813845 /* Exceptions for "CurrEx" folder in "CurrEx" target */,
+				744010BD2D79F61B007202CC /* Exceptions for "CurrEx" folder in "CurrExWidgetsExtension" target */,
 			);
 			path = CurrEx;
 			sourceTree = "<group>";

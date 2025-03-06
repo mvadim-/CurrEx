@@ -74,3 +74,21 @@
 "Best to buy" = "Найкраще купити";
 "Data updated:" = "Дані оновлено:";
 "Data not updated today!" = "Дані не оновлено сьогодні!";
+
+// MARK: - Widget
+"Widget.Title" = "Курси валют";
+"Widget.Description" = "Показує поточні курси USD та EUR";
+"Widget.UpdatedAt" = "Оновлено";
+"Widget.NoData" = "Немає даних";
+"Widget.BestToSell" = "Продати";
+"Widget.BestToBuy" = "Купити";
+"Widget.Buy" = "Купівля";
+"Widget.Sell" = "Продаж";
+"Widget.Currency.USD" = "USD";
+"Widget.Currency.EUR" = "EUR";
+"Widget.Spread" = "Спред";
+"Widget.BankName" = "Банк";
+"Widget.TapForDetails" = "Деталі";
+"Widget.DataNotUpdatedToday" = "Не оновлено!";
+"Widget.UpdatedToday" = "Оновлено о";
+"Widget.OpenAppToUpdate" = "Відкрийте додаток";

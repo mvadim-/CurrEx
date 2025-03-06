@@ -72,3 +72,21 @@
 "Best to buy" = "Best to buy";
 "Data updated:" = "Data updated:";
 "Data not updated today!" = "Data not updated today!";
+
+// MARK: - Widget
+"Widget.Title" = "Exchange Rates";
+"Widget.Description" = "Shows current USD and EUR exchange rates";
+"Widget.UpdatedAt" = "Updated";
+"Widget.NoData" = "No data";
+"Widget.BestToSell" = "Best to sell";
+"Widget.BestToBuy" = "Best to buy";
+"Widget.Buy" = "Buy";
+"Widget.Sell" = "Sell";
+"Widget.Currency.USD" = "USD";
+"Widget.Currency.EUR" = "EUR";
+"Widget.Spread" = "Spread";
+"Widget.BankName" = "Bank";
+"Widget.TapForDetails" = "Tap for details";
+"Widget.DataNotUpdatedToday" = "Data not updated today!";
+"Widget.UpdatedToday" = "Updated today at";
+"Widget.OpenAppToUpdate" = "Open app to update";
