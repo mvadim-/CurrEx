@@ -1,9 +1,96 @@
+// File: CurrExWidgets.swift
 import WidgetKit
 import SwiftUI
-import Intents
 
-// MARK: - Provider
+@main
+struct CurrExWidgets: WidgetBundle {
+    var body: some Widget {
+        CurrExWidget()
+    }
+}
 
+// File: CurrExWidget.swift
+struct CurrExWidget: Widget {
+    /// Widget type identifier
+    private let kind = "CurrExWidget"
+    
+    /// Widget configuration
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: ExchangeRateProvider()) { entry in
+            ExchangeRateWidgetView(entry: entry)
+        }
+        .configurationDisplayName(NSLocalizedString("Widget.Title", comment: "Widget display name"))
+        .description(NSLocalizedString("Widget.Description", comment: "Widget description"))
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+    }
+}
+
+// File: ExchangeRateWidgetView.swift
+/// Main widget view
+struct ExchangeRateWidgetView: View {
+    /// Widget size
+    @Environment(\.widgetFamily) var family
+    
+    /// Data for display in widget
+    var entry: ExchangeRateProvider.Entry
+    
+    var body: some View {
+        // Select layout based on widget size
+        Group {
+            switch family {
+            case .systemSmall:
+                SmallWidgetView(entry: entry)
+            case .systemMedium:
+                MediumWidgetView(entry: entry)
+            case .systemLarge:
+                LargeWidgetView(entry: entry)
+            default:
+                MediumWidgetView(entry: entry)
+            }
+        }
+        .containerBackground(.background, for: .widget) // Key change to use containerBackground API
+        .widgetURL(URL(string: "currex://widget/rates?currency=\(entry.currency)"))
+    }
+}
+
+// File: ExchangeRateEntry.swift
+/// Data model for widget
+struct ExchangeRateEntry: TimelineEntry {
+    /// Update date
+    let date: Date
+    
+    /// Currency (USD, EUR, etc.)
+    let currency: String
+    
+    /// Exchange rates for display in widget
+    let rates: [SharedWidgetModels.ExchangeRate]
+    
+    /// Formatted update time
+    var formattedUpdateTime: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        formatter.locale = Locale(identifier: "uk_UA")
+        return formatter.string(from: date)
+    }
+    
+    /// Best rate for selling currency
+    var bestBuyRate: SharedWidgetModels.ExchangeRate? {
+        rates.max(by: { $0.buyRate > $1.buyRate })
+    }
+        
+    /// Best rate for buying currency
+    var bestSellRate: SharedWidgetModels.ExchangeRate? {
+        rates.min(by: { $0.sellRate > $1.sellRate })
+    }
+    
+    /// Check if data is available
+    var hasData: Bool {
+        !rates.isEmpty
+    }
+}
+
+// File: ExchangeRateProvider.swift
 struct ExchangeRateProvider: TimelineProvider {
     typealias Entry = ExchangeRateEntry
     
@@ -11,8 +98,6 @@ struct ExchangeRateProvider: TimelineProvider {
     let settings = SharedDataService.getWidgetSettings()
     
     /// Provides placeholder for widget preview
-    /// - Parameter context: Widget context
-    /// - Returns: Placeholder for display in widget
     func placeholder(in context: Context) -> Entry {
         // Create placeholder with sample data
         let placeholder = [
@@ -47,9 +132,6 @@ struct ExchangeRateProvider: TimelineProvider {
     }
     
     /// Provides snapshot for widget
-    /// - Parameters:
-    ///   - context: Widget context
-    ///   - completion: Closure for receiving snapshot
     func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) {
         // Use placeholder in preview mode
         if context.isPreview {
@@ -72,9 +154,6 @@ struct ExchangeRateProvider: TimelineProvider {
     }
     
     /// Provides timeline for widget updates
-    /// - Parameters:
-    ///   - context: Widget context
-    ///   - completion: Closure for receiving timeline
     func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
         // Get real data
         let currency = settings.selectedCurrency
@@ -97,49 +176,7 @@ struct ExchangeRateProvider: TimelineProvider {
     }
 }
 
-// MARK: - Entry
-
-/// Data model for widget
-struct ExchangeRateEntry: TimelineEntry {
-    /// Update date
-    let date: Date
-    
-    /// Currency (USD, EUR, etc.)
-    let currency: String
-    
-    /// Exchange rates for display in widget
-    let rates: [SharedWidgetModels.ExchangeRate]
-    
-    /// Formatted update time
-    var formattedUpdateTime: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .none
-        formatter.timeStyle = .short
-        formatter.locale = Locale(identifier: "uk_UA")
-        return formatter.string(from: date)
-    }
-    
-    /// Best rate for selling currency
-    var bestBuyRate: SharedWidgetModels.ExchangeRate? {
-        rates.max(by: { $0.buyRate < $1.buyRate })
-    }
-    
-    /// Best rate for buying currency
-    var bestSellRate: SharedWidgetModels.ExchangeRate? {
-        rates.min(by: { $0.sellRate > $1.sellRate })
-    }
-    
-    /// Check if data is available
-    var hasData: Bool {
-        !rates.isEmpty
-    }
-}
-
-// MARK: - Small Widget View
-
-import SwiftUI
-import WidgetKit
-
+// File: SmallWidgetView.swift
 /// Improved small widget view with localization and optimized spacing
 struct SmallWidgetView: View {
     /// Data for display in the widget
@@ -191,10 +228,10 @@ struct SmallWidgetView: View {
                                 .foregroundColor(buyColor)
                         }
                     }
-                    .padding(.vertical, 2) // Reduced padding
-                    .padding(.horizontal, 4) // Reduced padding
+                    .padding(.vertical, 2)
+                    .padding(.horizontal, 4)
                     .background(buyColor.opacity(0.1))
-                    .cornerRadius(4) // Smaller corner radius
+                    .cornerRadius(4)
                 }
                 
                 // Best sell rate
@@ -218,10 +255,10 @@ struct SmallWidgetView: View {
                                 .foregroundColor(sellColor)
                         }
                     }
-                    .padding(.vertical, 2) // Reduced padding
-                    .padding(.horizontal, 4) // Reduced padding
+                    .padding(.vertical, 2)
+                    .padding(.horizontal, 4)
                     .background(sellColor.opacity(0.1))
-                    .cornerRadius(4) // Smaller corner radius
+                    .cornerRadius(4)
                 }
             } else {
                 Spacer()
@@ -245,13 +282,11 @@ struct SmallWidgetView: View {
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
-        .padding(8) // Reduced overall padding
+        .padding(8)
     }
 }
 
-import SwiftUI
-import WidgetKit
-
+// File: MediumWidgetView.swift
 /// Improved medium widget view with localization and optimized spacing
 struct MediumWidgetView: View {
     /// Data for display in the widget
@@ -264,7 +299,7 @@ struct MediumWidgetView: View {
     private let sellColor = Color("SellColor")
     
     var body: some View {
-        VStack(spacing: 4) { // Reduced spacing
+        VStack(spacing: 4) {
             // Header with currency
             HStack {
                 Text(NSLocalizedString("Widget.Title", comment: "Exchange rates title"))
@@ -409,15 +444,11 @@ struct MediumWidgetView: View {
                 Spacer()
             }
         }
-        .padding(10) // Reduced overall padding
+        .padding(10)
     }
 }
 
-// MARK: - Large Widget View
-
-import SwiftUI
-import WidgetKit
-
+// File: LargeWidgetView.swift
 /// Improved large widget view with localization and optimized spacing
 struct LargeWidgetView: View {
     /// Data for display in the widget
@@ -470,7 +501,7 @@ struct LargeWidgetView: View {
                                 .foregroundColor(.secondary)
                         }
                     }
-                    .padding(8) // Reduced padding
+                    .padding(8)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(buyColor.opacity(0.1))
                     .cornerRadius(10)
@@ -496,12 +527,12 @@ struct LargeWidgetView: View {
                                 .foregroundColor(.secondary)
                         }
                     }
-                    .padding(8) // Reduced padding
+                    .padding(8)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(sellColor.opacity(0.1))
                     .cornerRadius(10)
                 }
-                .frame(height: 100) // Fixed height to save space
+                .frame(height: 100)
                 
                 // Table with exchange rates
                 VStack(spacing: 0) {
@@ -598,127 +629,21 @@ struct LargeWidgetView: View {
                 Spacer()
             }
         }
-        .padding(12) // Reduced padding
+        .padding(12)
     }
 }
 
-// MARK: - Widget
-
-struct CurrExWidget: Widget {
-    /// Widget type identifier
-    private let kind = "CurrExWidget"
-    
-    /// Widget configuration
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: ExchangeRateProvider()) { entry in
-            ExchangeRateWidgetView(entry: entry)
-        }
-        .configurationDisplayName(NSLocalizedString("Widget.Title", comment: "Widget display name"))
-        .description(NSLocalizedString("Widget.Description", comment: "Widget description"))
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
-    }
-}
-
-/// Main widget view
-struct ExchangeRateWidgetView: View {
-    /// Widget size
-    @Environment(\.widgetFamily) var family
-    
-    /// Data for display in widget
-    var entry: ExchangeRateProvider.Entry
-    
-    var body: some View {
-        ZStack {
-            // Background color
-            Color(UIColor.systemBackground)
-                .edgesIgnoringSafeArea(.all)
-            
-            // Select layout based on widget size
-            switch family {
-            case .systemSmall:
-                SmallWidgetView(entry: entry)
-            case .systemMedium:
-                MediumWidgetView(entry: entry)
-            case .systemLarge:
-                LargeWidgetView(entry: entry)
-            default:
-                MediumWidgetView(entry: entry)
-            }
-        }
-        .widgetURL(URL(string: "currex://widget/rates?currency=\(entry.currency)"))
-    }
-}
-// Додайте цей extension для умовного застосування модифікаторів
+// Helper extension for conditional modifiers
 extension View {
     @ViewBuilder
-    func `if`<TrueContent: View, FalseContent: View>(
+    func `if`<Content: View>(
         _ condition: Bool,
-        @ViewBuilder then trueContent: (Self) -> TrueContent,
-        @ViewBuilder else falseContent: (Self) -> FalseContent
+        transform: (Self) -> Content
     ) -> some View {
         if condition {
-            trueContent(self)
+            transform(self)
         } else {
-            falseContent(self)
+            self
         }
     }
 }
-
-// MARK: - Widget Bundle
-
-@main
-struct CurrExWidgets: WidgetBundle {
-    var body: some Widget {
-        CurrExWidget()
-    }
-}
-
-//#Preview {
-//    Group {
-//        LargeRateWidgetView(entry: RateEntry(
-//            date: Date(),
-//            widgetData: WidgetExchangeRateData(
-//                bestBuyRates: [
-//                    "USD": WidgetExchangeRate(currencyType: "USD", buyRate: 38.5, sellRate: 39.2, bankName: "PrivatBank", timestamp: "2025-03-05T12:00:00Z"),
-//                    "EUR": WidgetExchangeRate(currencyType: "EUR", buyRate: 41.3, sellRate: 42.1, bankName: "Raiffeisen", timestamp: "2025-03-05T12:00:00Z")
-//                ],
-//                bestSellRates: [
-//                    "USD": WidgetExchangeRate(currencyType: "USD", buyRate: 38.2, sellRate: 38.9, bankName: "Raiffeisen", timestamp: "2025-03-05T12:00:00Z"),
-//                    "EUR": WidgetExchangeRate(currencyType: "EUR", buyRate: 40.8, sellRate: 41.7, bankName: "Bestobmin", timestamp: "2025-03-05T12:00:00Z")
-//                ],
-//                lastUpdated: Date()
-//            )
-//        ))
-//        .previewContext(WidgetPreviewContext(family: .systemLarge))
-//        
-//        MediumRateWidgetView(entry: RateEntry(
-//            date: Date(),
-//            widgetData: WidgetExchangeRateData(
-//                bestBuyRates: [
-//                    "USD": WidgetExchangeRate(currencyType: "USD", buyRate: 38.5, sellRate: 39.2, bankName: "PrivatBank", timestamp: "2025-03-05T12:00:00Z"),
-//                    "EUR": WidgetExchangeRate(currencyType: "EUR", buyRate: 41.3, sellRate: 42.1, bankName: "Raiffeisen", timestamp: "2025-03-05T12:00:00Z")
-//                ],
-//                bestSellRates: [
-//                    "USD": WidgetExchangeRate(currencyType: "USD", buyRate: 38.2, sellRate: 38.9, bankName: "Raiffeisen", timestamp: "2025-03-05T12:00:00Z"),
-//                    "EUR": WidgetExchangeRate(currencyType: "EUR", buyRate: 40.8, sellRate: 41.7, bankName: "Bestobmin", timestamp: "2025-03-05T12:00:00Z")
-//                ],
-//                lastUpdated: Date()
-//            )
-//        ))
-//        .previewContext(WidgetPreviewContext(family: .systemMedium))
-//        
-//        SmallRateWidgetView(entry: RateEntry(
-//            date: Date(),
-//            widgetData: WidgetExchangeRateData(
-//                bestBuyRates: [
-//                    "USD": WidgetExchangeRate(currencyType: "USD", buyRate: 38.5, sellRate: 39.2, bankName: "PrivatBank", timestamp: "2025-03-05T12:00:00Z"),
-//                ],
-//                bestSellRates: [
-//                    "USD": WidgetExchangeRate(currencyType: "USD", buyRate: 38.2, sellRate: 38.9, bankName: "Raiffeisen", timestamp: "2025-03-05T12:00:00Z"),
-//                ],
-//                lastUpdated: Date()
-//            )
-//        ))
-//        .previewContext(WidgetPreviewContext(family: .systemSmall))
-//    }
-//}
