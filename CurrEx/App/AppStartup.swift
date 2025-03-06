@@ -15,7 +15,7 @@ extension CurrExApp {
     func configureApp() {
         // Initialize the settings manager to load language preferences
         _ = SettingsManager.shared
-    }
+    } 
 }
 
 // MARK: - Update the App Entry Point

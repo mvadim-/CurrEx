@@ -152,13 +152,13 @@
 		746253DF2D6FA6E600C6703F = {
 			isa = PBXGroup;
 			children = (
-				742F63772D79B43B00D9C3ED /* CurrExWidgetsExtension.entitlements */,
 				746253EA2D6FA6E600C6703F /* CurrEx */,
 				746253FC2D6FA6E800C6703F /* CurrExTests */,
 				746254062D6FA6E800C6703F /* CurrExUITests */,
 				742F63612D79B3CF00D9C3ED /* CurrExWidgets */,
 				742F635C2D79B3CF00D9C3ED /* Frameworks */,
 				746253E92D6FA6E600C6703F /* Products */,
+				742F63772D79B43B00D9C3ED /* CurrExWidgetsExtension.entitlements */,
 			);
 			sourceTree = "<group>";
 		};
