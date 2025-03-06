@@ -7,6 +7,8 @@
 
 import Foundation
 import SwiftUI
+import WidgetKit
+
 
 // MARK: - Main Content View Model
 final class ExchangeRateViewModel: ObservableObject {
@@ -71,23 +73,85 @@ final class ExchangeRateViewModel: ObservableObject {
     }
     
     /// Loads exchange rate data for all supported currencies
+//    func loadDataForAllCurrencies() {
+//        isLoading = true
+//        errorMessage = nil
+//        
+//        Task { @MainActor in
+//            do {
+//                for currency in CurrencyType.allCases {
+//                    let rates = try await service.fetchExchangeRates(for: currency.rawValue)
+//                    ratesData[currency] = rates
+//                    
+//                    let isoFormatter = ISO8601DateFormatter()
+//                    isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+//                    
+//                    if let rateData = rates.first, let date = isoFormatter.date(from: rateData.timestamp) {
+//                        lastUpdatedFromServer[currency] = dateFormatter.string(from: date)
+//                    }
+//                }
+//                
+//                lastUpdated = formatCurrentTime()
+//                isLoading = false
+//            } catch {
+//                handleError(error)
+//            }
+//        }
+//    }
+    
     func loadDataForAllCurrencies() {
         isLoading = true
         errorMessage = nil
         
         Task { @MainActor in
             do {
+                var bestBuyRates: [String: WidgetExchangeRate] = [:]
+                var bestSellRates: [String: WidgetExchangeRate] = [:]
+                
                 for currency in CurrencyType.allCases {
                     let rates = try await service.fetchExchangeRates(for: currency.rawValue)
                     ratesData[currency] = rates
                     
+                    // Знаходимо найкращі курси
+                    if let bestBuy = findBestRates(for: currency).buy,
+                       let bestSell = findBestRates(for: currency).sell {
+                        
+                        // Зберігаємо для віджетів
+                        bestBuyRates[currency.rawValue] = WidgetExchangeRate(
+                            currencyType: currency.rawValue,
+                            buyRate: bestBuy.buyRate,
+                            sellRate: bestBuy.sellRate,
+                            bankName: bestBuy.name,
+                            timestamp: bestBuy.timestamp
+                        )
+                        
+                        bestSellRates[currency.rawValue] = WidgetExchangeRate(
+                            currencyType: currency.rawValue,
+                            buyRate: bestSell.buyRate,
+                            sellRate: bestSell.sellRate,
+                            bankName: bestSell.name,
+                            timestamp: bestSell.timestamp
+                        )
+                    }
+                    
+                    // Оновлюємо часові мітки
                     let isoFormatter = ISO8601DateFormatter()
                     isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                    
                     if let rateData = rates.first, let date = isoFormatter.date(from: rateData.timestamp) {
                         lastUpdatedFromServer[currency] = dateFormatter.string(from: date)
                     }
                 }
+                
+                // Оновлюємо дані для віджетів
+                let widgetData = WidgetExchangeRateData(
+                    bestBuyRates: bestBuyRates,
+                    bestSellRates: bestSellRates,
+                    lastUpdated: Date()
+                )
+                WidgetDataManager.saveWidgetData(widgetData)
+                
+                // Повідомляємо віджети про оновлення
+                WidgetCenter.shared.reloadAllTimelines()
                 
                 lastUpdated = formatCurrentTime()
                 isLoading = false

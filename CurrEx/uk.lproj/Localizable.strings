@@ -62,3 +62,15 @@
 "Chart history is available in iOS 16+" = "Історія графіків доступна в iOS 16+";
 "Initial rates:" = "Початкові курси:";
 "Latest rates:" = "Останні курси:";
+
+
+"Exchange Rates" = "Курси валют";
+"Shows current USD and EUR exchange rates" = "Відображає поточні курси валют USD та EUR";
+"Buy" = "Купівля";
+"Sell" = "Продаж";
+"Exchange Rates in IF" = "Курси валют в ІФ";
+"Best exchange rates" = "Найкращі курси для обміну";
+"Best to sell" = "Найкраще продати";
+"Best to buy" = "Найкраще купити";
+"Data updated:" = "Дані оновлено:";
+"Data not updated today!" = "Дані не оновлено сьогодні!";

@@ -6,7 +6,20 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		742F635E2D79B3CF00D9C3ED /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 742F635D2D79B3CF00D9C3ED /* WidgetKit.framework */; };
+		742F63602D79B3CF00D9C3ED /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 742F635F2D79B3CF00D9C3ED /* SwiftUI.framework */; };
+		742F63712D79B3D000D9C3ED /* CurrExWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 742F635B2D79B3CF00D9C3ED /* CurrExWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
+		742F636F2D79B3D000D9C3ED /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 746253E02D6FA6E600C6703F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 742F635A2D79B3CF00D9C3ED;
+			remoteInfo = CurrExWidgetsExtension;
+		};
 		746253FA2D6FA6E800C6703F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 746253E02D6FA6E600C6703F /* Project object */;
@@ -23,7 +36,25 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		742F63722D79B3D000D9C3ED /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				742F63712D79B3D000D9C3ED /* CurrExWidgetsExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		742F635B2D79B3CF00D9C3ED /* CurrExWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CurrExWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		742F635D2D79B3CF00D9C3ED /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		742F635F2D79B3CF00D9C3ED /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		742F63772D79B43B00D9C3ED /* CurrExWidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CurrExWidgetsExtension.entitlements; sourceTree = "<group>"; };
 		746253E82D6FA6E600C6703F /* CurrEx.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CurrEx.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		746253F92D6FA6E800C6703F /* CurrExTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CurrExTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		746254032D6FA6E800C6703F /* CurrExUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CurrExUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -37,9 +68,24 @@
 			);
 			target = 746253E72D6FA6E600C6703F /* CurrEx */;
 		};
+		742F63762D79B3D000D9C3ED /* Exceptions for "CurrExWidgets" folder in "CurrExWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 742F635A2D79B3CF00D9C3ED /* CurrExWidgetsExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		742F63612D79B3CF00D9C3ED /* CurrExWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				742F63762D79B3D000D9C3ED /* Exceptions for "CurrExWidgets" folder in "CurrExWidgetsExtension" target */,
+			);
+			path = CurrExWidgets;
+			sourceTree = "<group>";
+		};
 		746253EA2D6FA6E600C6703F /* CurrEx */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -61,6 +107,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		742F63582D79B3CF00D9C3ED /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				742F63602D79B3CF00D9C3ED /* SwiftUI.framework in Frameworks */,
+				742F635E2D79B3CF00D9C3ED /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		746253E52D6FA6E600C6703F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -85,12 +140,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		742F635C2D79B3CF00D9C3ED /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				742F635D2D79B3CF00D9C3ED /* WidgetKit.framework */,
+				742F635F2D79B3CF00D9C3ED /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		746253DF2D6FA6E600C6703F = {
 			isa = PBXGroup;
 			children = (
+				742F63772D79B43B00D9C3ED /* CurrExWidgetsExtension.entitlements */,
 				746253EA2D6FA6E600C6703F /* CurrEx */,
 				746253FC2D6FA6E800C6703F /* CurrExTests */,
 				746254062D6FA6E800C6703F /* CurrExUITests */,
+				742F63612D79B3CF00D9C3ED /* CurrExWidgets */,
+				742F635C2D79B3CF00D9C3ED /* Frameworks */,
 				746253E92D6FA6E600C6703F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -101,6 +168,7 @@
 				746253E82D6FA6E600C6703F /* CurrEx.app */,
 				746253F92D6FA6E800C6703F /* CurrExTests.xctest */,
 				746254032D6FA6E800C6703F /* CurrExUITests.xctest */,
+				742F635B2D79B3CF00D9C3ED /* CurrExWidgetsExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -108,6 +176,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		742F635A2D79B3CF00D9C3ED /* CurrExWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 742F63752D79B3D000D9C3ED /* Build configuration list for PBXNativeTarget "CurrExWidgetsExtension" */;
+			buildPhases = (
+				742F63572D79B3CF00D9C3ED /* Sources */,
+				742F63582D79B3CF00D9C3ED /* Frameworks */,
+				742F63592D79B3CF00D9C3ED /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				742F63612D79B3CF00D9C3ED /* CurrExWidgets */,
+			);
+			name = CurrExWidgetsExtension;
+			packageProductDependencies = (
+			);
+			productName = CurrExWidgetsExtension;
+			productReference = 742F635B2D79B3CF00D9C3ED /* CurrExWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		746253E72D6FA6E600C6703F /* CurrEx */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7462540D2D6FA6E800C6703F /* Build configuration list for PBXNativeTarget "CurrEx" */;
@@ -115,10 +205,12 @@
 				746253E42D6FA6E600C6703F /* Sources */,
 				746253E52D6FA6E600C6703F /* Frameworks */,
 				746253E62D6FA6E600C6703F /* Resources */,
+				742F63722D79B3D000D9C3ED /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				742F63702D79B3D000D9C3ED /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				746253EA2D6FA6E600C6703F /* CurrEx */,
@@ -186,6 +278,9 @@
 				LastSwiftUpdateCheck = 1620;
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
+					742F635A2D79B3CF00D9C3ED = {
+						CreatedOnToolsVersion = 16.2;
+					};
 					746253E72D6FA6E600C6703F = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -216,11 +311,19 @@
 				746253E72D6FA6E600C6703F /* CurrEx */,
 				746253F82D6FA6E800C6703F /* CurrExTests */,
 				746254022D6FA6E800C6703F /* CurrExUITests */,
+				742F635A2D79B3CF00D9C3ED /* CurrExWidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		742F63592D79B3CF00D9C3ED /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		746253E62D6FA6E600C6703F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -245,6 +348,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		742F63572D79B3CF00D9C3ED /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		746253E42D6FA6E600C6703F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -269,6 +379,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		742F63702D79B3D000D9C3ED /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 742F635A2D79B3CF00D9C3ED /* CurrExWidgetsExtension */;
+			targetProxy = 742F636F2D79B3D000D9C3ED /* PBXContainerItemProxy */;
+		};
 		746253FB2D6FA6E800C6703F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 746253E72D6FA6E600C6703F /* CurrEx */;
@@ -282,6 +397,67 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		742F63732D79B3D000D9C3ED /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = CurrExWidgetsExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = A2PX8YZMXY;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CurrExWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CurrExWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.softjourn.currex.CurrExWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		742F63742D79B3D000D9C3ED /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = CurrExWidgetsExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = A2PX8YZMXY;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CurrExWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CurrExWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.softjourn.currex.CurrExWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		7462540B2D6FA6E800C6703F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -432,7 +608,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.2;
@@ -487,7 +663,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 15.2;
@@ -601,6 +777,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		742F63752D79B3D000D9C3ED /* Build configuration list for PBXNativeTarget "CurrExWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				742F63732D79B3D000D9C3ED /* Debug */,
+				742F63742D79B3D000D9C3ED /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		746253E32D6FA6E600C6703F /* Build configuration list for PBXProject "CurrEx" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
