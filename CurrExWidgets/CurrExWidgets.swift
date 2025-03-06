@@ -1,4 +1,5 @@
-// File: CurrExWidgets.swift
+// Fix for containerBackground and color definition issues in CurrExWidgets.swift
+
 import WidgetKit
 import SwiftUI
 
@@ -9,7 +10,6 @@ struct CurrExWidgets: WidgetBundle {
     }
 }
 
-// File: CurrExWidget.swift
 struct CurrExWidget: Widget {
     /// Widget type identifier
     private let kind = "CurrExWidget"
@@ -25,7 +25,6 @@ struct CurrExWidget: Widget {
     }
 }
 
-// File: ExchangeRateWidgetView.swift
 /// Main widget view
 struct ExchangeRateWidgetView: View {
     /// Widget size
@@ -48,148 +47,25 @@ struct ExchangeRateWidgetView: View {
                 MediumWidgetView(entry: entry)
             }
         }
-        .containerBackground(.background, for: .widget) // Key change to use containerBackground API
+        // Fix for containerBackground
+        .containerBackground(for: .widget) {
+            Color(.systemBackground)
+        }
         .widgetURL(URL(string: "currex://widget/rates?currency=\(entry.currency)"))
     }
 }
 
-// File: ExchangeRateEntry.swift
-/// Data model for widget
-struct ExchangeRateEntry: TimelineEntry {
-    /// Update date
-    let date: Date
-    
-    /// Currency (USD, EUR, etc.)
-    let currency: String
-    
-    /// Exchange rates for display in widget
-    let rates: [SharedWidgetModels.ExchangeRate]
-    
-    /// Formatted update time
-    var formattedUpdateTime: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .none
-        formatter.timeStyle = .short
-        formatter.locale = Locale(identifier: "uk_UA")
-        return formatter.string(from: date)
-    }
-    
-    /// Best rate for selling currency
-    var bestBuyRate: SharedWidgetModels.ExchangeRate? {
-        rates.max(by: { $0.buyRate > $1.buyRate })
-    }
-        
-    /// Best rate for buying currency
-    var bestSellRate: SharedWidgetModels.ExchangeRate? {
-        rates.min(by: { $0.sellRate > $1.sellRate })
-    }
-    
-    /// Check if data is available
-    var hasData: Bool {
-        !rates.isEmpty
-    }
-}
-
-// File: ExchangeRateProvider.swift
-struct ExchangeRateProvider: TimelineProvider {
-    typealias Entry = ExchangeRateEntry
-    
-    /// Widget settings
-    let settings = SharedDataService.getWidgetSettings()
-    
-    /// Provides placeholder for widget preview
-    func placeholder(in context: Context) -> Entry {
-        // Create placeholder with sample data
-        let placeholder = [
-            SharedWidgetModels.ExchangeRate(
-                currency: "USD",
-                bankName: "PrivatBank",
-                buyRate: 38.5,
-                sellRate: 39.2,
-                timestamp: ""
-            ),
-            SharedWidgetModels.ExchangeRate(
-                currency: "USD",
-                bankName: "Bestobmin",
-                buyRate: 38.7,
-                sellRate: 39.1,
-                timestamp: ""
-            ),
-            SharedWidgetModels.ExchangeRate(
-                currency: "USD",
-                bankName: "Raiffeisen",
-                buyRate: 38.3,
-                sellRate: 38.9,
-                timestamp: ""
-            )
-        ]
-        
-        return Entry(
-            date: Date(),
-            currency: settings.selectedCurrency,
-            rates: placeholder
-        )
-    }
-    
-    /// Provides snapshot for widget
-    func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) {
-        // Use placeholder in preview mode
-        if context.isPreview {
-            completion(placeholder(in: context))
-            return
-        }
-        
-        // Otherwise get real data
-        let currency = settings.selectedCurrency
-        let rates = SharedDataService.getExchangeRates(for: currency)
-        let date = SharedDataService.getLastUpdateTime() ?? Date()
-        
-        let entry = Entry(
-            date: date,
-            currency: currency,
-            rates: rates
-        )
-        
-        completion(entry)
-    }
-    
-    /// Provides timeline for widget updates
-    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
-        // Get real data
-        let currency = settings.selectedCurrency
-        let rates = SharedDataService.getExchangeRates(for: currency)
-        let date = SharedDataService.getLastUpdateTime() ?? Date()
-        
-        let entry = Entry(
-            date: date,
-            currency: currency,
-            rates: rates
-        )
-        
-        // Update widget every 30 minutes
-        let refreshDate = Calendar.current.date(byAdding: .minute, value: 30, to: Date()) ?? Date()
-        
-        // Create timeline with single entry
-        let timeline = Timeline(entries: [entry], policy: .after(refreshDate))
-        
-        completion(timeline)
-    }
-}
-
-// File: SmallWidgetView.swift
-/// Improved small widget view with localization and optimized spacing
+/// Small widget view
 struct SmallWidgetView: View {
-    /// Data for display in the widget
+    /// Data for display
     let entry: ExchangeRateEntry
     
-    /// Buy rate color
+    /// Colors for rates
     private let buyColor = Color("BuyColor")
-    
-    /// Sell rate color
     private let sellColor = Color("SellColor")
     
     var body: some View {
-        VStack(spacing: 4) { // Reduced spacing to fit more content
+        VStack(spacing: 4) {
             // Header with currency
             HStack {
                 Text(entry.currency)
@@ -200,7 +76,7 @@ struct SmallWidgetView: View {
                 
                 // Display update time
                 Text(NSLocalizedString("Widget.UpdatedAt", comment: "Updated label"))
-                    .font(.system(size: 8)) // Smaller font
+                    .font(.system(size: 8))
                     .foregroundColor(.secondary)
             }
             
@@ -215,7 +91,6 @@ struct SmallWidgetView: View {
                             .foregroundColor(.secondary)
                         
                         HStack {
-                            // Short bank name (first 4 chars + ellipsis if longer)
                             Text(bestBuy.bankName.count > 6 ? String(bestBuy.bankName.prefix(4)) + "..." : bestBuy.bankName)
                                 .font(.caption)
                                 .lineLimit(1)
@@ -242,7 +117,6 @@ struct SmallWidgetView: View {
                             .foregroundColor(.secondary)
                         
                         HStack {
-                            // Short bank name (first 4 chars + ellipsis if longer)
                             Text(bestSell.bankName.count > 6 ? String(bestSell.bankName.prefix(4)) + "..." : bestSell.bankName)
                                 .font(.caption)
                                 .lineLimit(1)
@@ -274,7 +148,7 @@ struct SmallWidgetView: View {
                 Spacer()
             }
             
-            // Last updated time (only show if data exists)
+            // Last updated time
             if entry.hasData {
                 Text(entry.formattedUpdateTime)
                     .font(.system(size: 8))
@@ -286,16 +160,13 @@ struct SmallWidgetView: View {
     }
 }
 
-// File: MediumWidgetView.swift
-/// Improved medium widget view with localization and optimized spacing
+/// Medium widget view
 struct MediumWidgetView: View {
-    /// Data for display in the widget
+    /// Data for display
     let entry: ExchangeRateEntry
     
-    /// Buy rate color
+    /// Colors for rates
     private let buyColor = Color("BuyColor")
-    
-    /// Sell rate color
     private let sellColor = Color("SellColor")
     
     var body: some View {
@@ -315,53 +186,54 @@ struct MediumWidgetView: View {
             }
             
             if entry.hasData {
-                // Rates table
+                // Rates table - Updated to match main app format
                 VStack(spacing: 0) {
                     // Table header
                     HStack {
                         Text(NSLocalizedString("Widget.BankName", comment: "Bank column header"))
                             .font(.system(size: 10))
-                            .fontWeight(.medium)
+                            .fontWeight(.semibold)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         Text(NSLocalizedString("Widget.Buy", comment: "Buy column header"))
                             .font(.system(size: 10))
-                            .fontWeight(.medium)
-                            .frame(width: 55, alignment: .trailing)
+                            .fontWeight(.semibold)
+                            .frame(width: 70, alignment: .trailing)
                         
                         Text(NSLocalizedString("Widget.Sell", comment: "Sell column header"))
                             .font(.system(size: 10))
-                            .fontWeight(.medium)
-                            .frame(width: 55, alignment: .trailing)
+                            .fontWeight(.semibold)
+                            .frame(width: 70, alignment: .trailing)
                     }
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
+                    .padding(.vertical, 4)
                     .background(Color.secondary.opacity(0.1))
                     
-                    // Exchange rate data
+                    // Exchange rate data - Match main app order
                     ForEach(entry.rates.prefix(3)) { rate in // Limit to first 3 banks
                         HStack {
-                            // Short bank name (first 8 chars)
-                            Text(rate.bankName.count > 8 ? String(rate.bankName.prefix(8)) : rate.bankName)
+                            Text(rate.bankName)
                                 .font(.system(size: 11))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .lineLimit(1)
                             
-                            Text(String(format: "%.2f", rate.sellRate))
-                                .font(.system(size: 11))
-                                .fontWeight(.medium)
-                                .foregroundColor(sellColor)
-                                .frame(width: 55, alignment: .trailing)
-                            
+                            // Buy rate (main app order)
                             Text(String(format: "%.2f", rate.buyRate))
                                 .font(.system(size: 11))
                                 .fontWeight(.medium)
                                 .foregroundColor(buyColor)
-                                .frame(width: 55, alignment: .trailing)
+                                .frame(width: 70, alignment: .trailing)
+                            
+                            // Sell rate (main app order)
+                            Text(String(format: "%.2f", rate.sellRate))
+                                .font(.system(size: 11))
+                                .fontWeight(.medium)
+                                .foregroundColor(sellColor)
+                                .frame(width: 70, alignment: .trailing)
                         }
                         .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
+                        .padding(.vertical, 4)
                         
                         // Add divider for all rows except the last
                         if rate.id != entry.rates.prefix(3).last?.id {
@@ -373,7 +245,7 @@ struct MediumWidgetView: View {
                 .background(Color.secondary.opacity(0.05))
                 .cornerRadius(8)
                 
-                // Best rates
+                // Best rates section
                 HStack(spacing: 6) {
                     // Best sell rate
                     if let bestBuy = entry.bestBuyRate {
@@ -448,16 +320,13 @@ struct MediumWidgetView: View {
     }
 }
 
-// File: LargeWidgetView.swift
-/// Improved large widget view with localization and optimized spacing
+/// Large widget view
 struct LargeWidgetView: View {
-    /// Data for display in the widget
+    /// Data for display
     let entry: ExchangeRateEntry
     
-    /// Buy rate color
+    /// Colors for rates
     private let buyColor = Color("BuyColor")
-    
-    /// Sell rate color
     private let sellColor = Color("SellColor")
     
     var body: some View {
@@ -540,23 +409,23 @@ struct LargeWidgetView: View {
                     HStack {
                         Text(NSLocalizedString("Widget.BankName", comment: "Bank column header"))
                             .font(.caption)
-                            .fontWeight(.medium)
+                            .fontWeight(.semibold)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         Text(NSLocalizedString("Widget.Buy", comment: "Buy column header"))
                             .font(.caption)
-                            .fontWeight(.medium)
-                            .frame(width: 60, alignment: .trailing)
+                            .fontWeight(.semibold)
+                            .frame(width: 70, alignment: .trailing)
                         
                         Text(NSLocalizedString("Widget.Sell", comment: "Sell column header"))
                             .font(.caption)
-                            .fontWeight(.medium)
-                            .frame(width: 60, alignment: .trailing)
+                            .fontWeight(.semibold)
+                            .frame(width: 70, alignment: .trailing)
                         
                         Text(NSLocalizedString("Widget.Spread", comment: "Spread column header"))
                             .font(.caption)
-                            .fontWeight(.medium)
-                            .frame(width: 60, alignment: .trailing)
+                            .fontWeight(.semibold)
+                            .frame(width: 70, alignment: .trailing)
                     }
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 10)
@@ -571,21 +440,23 @@ struct LargeWidgetView: View {
                                 .lineLimit(1)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             
-                            Text(String(format: "%.2f", rate.sellRate))
-                                .font(.subheadline)
-                                .foregroundColor(sellColor)
-                                .frame(width: 60, alignment: .trailing)
-                            
+                            // Buy rate (corrected order)
                             Text(String(format: "%.2f", rate.buyRate))
                                 .font(.subheadline)
                                 .foregroundColor(buyColor)
-                                .frame(width: 60, alignment: .trailing)
+                                .frame(width: 70, alignment: .trailing)
+                            
+                            // Sell rate (corrected order)
+                            Text(String(format: "%.2f", rate.sellRate))
+                                .font(.subheadline)
+                                .foregroundColor(sellColor)
+                                .frame(width: 70, alignment: .trailing)
                             
                             let spread = rate.sellRate - rate.buyRate
                             Text(String(format: "%.2f", spread))
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
-                                .frame(width: 60, alignment: .trailing)
+                                .frame(width: 70, alignment: .trailing)
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
@@ -633,17 +504,86 @@ struct LargeWidgetView: View {
     }
 }
 
-// Helper extension for conditional modifiers
-extension View {
-    @ViewBuilder
-    func `if`<Content: View>(
-        _ condition: Bool,
-        transform: (Self) -> Content
-    ) -> some View {
-        if condition {
-            transform(self)
-        } else {
-            self
+// Check if these are included elsewhere, if not add them here:
+
+struct ExchangeRateEntry: TimelineEntry {
+    let date: Date
+    let currency: String
+    let rates: [SharedWidgetModels.ExchangeRate]
+    
+    var formattedUpdateTime: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        formatter.locale = Locale(identifier: "uk_UA")
+        return formatter.string(from: date)
+    }
+    
+    // Corrected best rate calculations
+    var bestBuyRate: SharedWidgetModels.ExchangeRate? {
+        rates.max(by: { $0.buyRate < $1.buyRate })
+    }
+    
+    var bestSellRate: SharedWidgetModels.ExchangeRate? {
+        rates.min(by: { $0.sellRate > $1.sellRate })
+    }
+    
+    var hasData: Bool {
+        !rates.isEmpty
+    }
+}
+
+struct ExchangeRateProvider: TimelineProvider {
+    typealias Entry = ExchangeRateEntry
+    
+    let settings = SharedDataService.getWidgetSettings()
+    
+    func placeholder(in context: Context) -> Entry {
+        // Sample data
+        let placeholder = [
+            SharedWidgetModels.ExchangeRate.example
+        ]
+        
+        return Entry(
+            date: Date(),
+            currency: settings.selectedCurrency,
+            rates: placeholder
+        )
+    }
+    
+    func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) {
+        if context.isPreview {
+            completion(placeholder(in: context))
+            return
         }
+        
+        let currency = settings.selectedCurrency
+        let rates = SharedDataService.getExchangeRates(for: currency)
+        let date = SharedDataService.getLastUpdateTime() ?? Date()
+        
+        let entry = Entry(
+            date: date,
+            currency: currency,
+            rates: rates
+        )
+        
+        completion(entry)
+    }
+    
+    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
+        let currency = settings.selectedCurrency
+        let rates = SharedDataService.getExchangeRates(for: currency)
+        let date = SharedDataService.getLastUpdateTime() ?? Date()
+        
+        let entry = Entry(
+            date: date,
+            currency: currency,
+            rates: rates
+        )
+        
+        let refreshDate = Calendar.current.date(byAdding: .minute, value: 30, to: Date()) ?? Date()
+        let timeline = Timeline(entries: [entry], policy: .after(refreshDate))
+        
+        completion(timeline)
     }
 }

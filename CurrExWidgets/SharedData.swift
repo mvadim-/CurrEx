@@ -65,9 +65,23 @@ enum SharedDataService {
             return []
         }
         
+        // Use all rates if available
+        if let allRates = data.allRates[currency] {
+            return allRates.map { rate in
+                SharedWidgetModels.ExchangeRate(
+                    currency: rate.currencyType,
+                    bankName: rate.bankName,
+                    buyRate: rate.buyRate,
+                    sellRate: rate.sellRate,
+                    timestamp: rate.timestamp
+                )
+            }
+        }
+        
+        // Fallback to older approach if all rates aren't available
         var rates: [SharedWidgetModels.ExchangeRate] = []
         
-        // Add buy rates if available
+        // Add best buy rate if available
         if let buyRate = data.bestBuyRates[currency] {
             rates.append(SharedWidgetModels.ExchangeRate(
                 currency: buyRate.currencyType,
@@ -78,7 +92,7 @@ enum SharedDataService {
             ))
         }
         
-        // Add sell rates if available and not already added
+        // Add best sell rate if available and not already added
         if let sellRate = data.bestSellRates[currency],
            !rates.contains(where: { $0.bankName == sellRate.bankName }) {
             rates.append(SharedWidgetModels.ExchangeRate(
@@ -89,9 +103,6 @@ enum SharedDataService {
                 timestamp: sellRate.timestamp
             ))
         }
-        
-        // Add any other rates from the data that aren't already included
-        // (This would need implementation based on your data structure)
         
         return rates
     }
@@ -144,6 +155,7 @@ enum WidgetDataManager {
 struct WidgetExchangeRateData: Codable {
     let bestBuyRates: [String: WidgetExchangeRate]
     let bestSellRates: [String: WidgetExchangeRate]
+    let allRates: [String: [WidgetExchangeRate]]  // New property to store all rates
     let lastUpdated: Date
     
     /// Empty data structure
@@ -151,6 +163,7 @@ struct WidgetExchangeRateData: Codable {
         return WidgetExchangeRateData(
             bestBuyRates: [:],
             bestSellRates: [:],
+            allRates: [:],
             lastUpdated: Date()
         )
     }
