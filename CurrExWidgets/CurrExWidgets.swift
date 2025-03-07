@@ -1,5 +1,3 @@
-// Fix for containerBackground and color definition issues in CurrExWidgets.swift
-
 import WidgetKit
 import SwiftUI
 
@@ -48,69 +46,11 @@ struct ExchangeRateWidgetView: View {
             }
         }
         // Add containerBackground for iOS 17+
-        .containerBackground(for: .widget) {
-            Color(.systemBackground)
-        }
+        .modifier(WidgetBackgroundModifier())
         .widgetURL(URL(string: "currex://widget/rates?currency=\(entry.currency)"))
     }
 }
 
-struct ExchangeRateWidgetView_Previews: PreviewProvider {
-    static var previews: some View {
-        let sampleEntry = ExchangeRateEntry(
-            date: Date(),
-            currency: "USD",
-            rates: [
-                SharedWidgetModels.ExchangeRate(
-                    currency: "USD",
-                    bankName: "PrivatBank",
-                    buyRate: 38.5,
-                    sellRate: 39.2,
-                    timestamp: ""
-                ),
-                SharedWidgetModels.ExchangeRate(
-                    currency: "USD",
-                    bankName: "Raiffeisen",
-                    buyRate: 38.3,
-                    sellRate: 38.9,
-                    timestamp: ""
-                ),
-                SharedWidgetModels.ExchangeRate(
-                    currency: "USD",
-                    bankName: "Bestobmin",
-                    buyRate: 38.7,
-                    sellRate: 39.1,
-                    timestamp: ""
-                )
-            ],
-            bestBuyRate: SharedWidgetModels.ExchangeRate(
-                currency: "USD",
-                bankName: "Bestobmin",
-                buyRate: 38.7,
-                sellRate: 39.1,
-                timestamp: ""
-            ),
-            bestSellRate: SharedWidgetModels.ExchangeRate(
-                currency: "USD",
-                bankName: "Raiffeisen",
-                buyRate: 38.3,
-                sellRate: 38.9,
-                timestamp: ""
-            )
-        )
-        
-        Group {
-            ExchangeRateWidgetView(entry: sampleEntry)
-                .previewContext(WidgetPreviewContext(family: .systemSmall))
-            
-            ExchangeRateWidgetView(entry: sampleEntry)
-                .previewContext(WidgetPreviewContext(family: .systemMedium))
-            
-            ExchangeRateWidgetView(entry: sampleEntry)
-                .previewContext(WidgetPreviewContext(family: .systemLarge))
-        }
-    }
-}
 /// Small widget view
 struct SmallWidgetView: View {
     /// Data for display
@@ -121,138 +61,108 @@ struct SmallWidgetView: View {
     private let sellColor = Color("SellColor")
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 4) {
             // Header with currency
             HStack {
                 Text(entry.currency)
                     .font(.headline)
                     .fontWeight(.bold)
+                    .minimumScaleFactor(0.8)
+                    .lineLimit(1)
                 
                 Spacer()
-                
-                // Display update time
-                Text(NSLocalizedString("Widget.UpdatedAt", comment: "Updated label"))
-                    .font(.system(size: 8))
-                    .foregroundColor(.secondary)
             }
             
-            Spacer()
-            
             if entry.hasData {
+                Spacer(minLength: 0)
+                
                 // Best buy rate (highest buy rate - best to sell at)
                 if let bestBuy = entry.bestBuyRate {
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 1) {
                         Text(NSLocalizedString("Widget.BestToSell", comment: "Best to sell label"))
-                            .font(.caption2)
+                            .font(.system(size: 10))
                             .foregroundColor(.secondary)
+                            .lineLimit(1)
                         
                         HStack {
                             Text(bestBuy.bankName)
-                                .font(.caption)
+                                .font(.system(size: 11))
                                 .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                             
                             Spacer()
                             
                             Text(String(format: "%.2f", bestBuy.buyRate))
-                                .font(.body)
-                                .fontWeight(.bold)
+                                .font(.system(size: 13, weight: .bold))
                                 .foregroundColor(buyColor)
+                                .lineLimit(1)
                         }
                     }
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .padding(.horizontal, 6)
                     .background(buyColor.opacity(0.1))
                     .cornerRadius(6)
                 }
                 
+                Spacer(minLength: 2)
+                
                 // Best sell rate (lowest sell rate - best to buy at)
                 if let bestSell = entry.bestSellRate {
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 1) {
                         Text(NSLocalizedString("Widget.BestToBuy", comment: "Best to buy label"))
-                            .font(.caption2)
+                            .font(.system(size: 10))
                             .foregroundColor(.secondary)
+                            .lineLimit(1)
                         
                         HStack {
                             Text(bestSell.bankName)
-                                .font(.caption)
+                                .font(.system(size: 11))
                                 .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                             
                             Spacer()
                             
                             Text(String(format: "%.2f", bestSell.sellRate))
-                                .font(.body)
-                                .fontWeight(.bold)
+                                .font(.system(size: 13, weight: .bold))
                                 .foregroundColor(sellColor)
+                                .lineLimit(1)
                         }
                     }
-                    .padding(.vertical, 4)
-                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .padding(.horizontal, 6)
                     .background(sellColor.opacity(0.1))
                     .cornerRadius(6)
                 }
-            } else {
-                // Display message if no data
-                Text(NSLocalizedString("Widget.NoData", comment: "No data text"))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            // Last updated timestamp
-            if entry.hasData {
+                
+                Spacer(minLength: 0)
+                
+                // Last updated timestamp
                 Text(entry.formattedUpdateTime)
                     .font(.system(size: 8))
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.top, 2)
+            } else {
+                // Display message if no data
+                Spacer()
+                
+                Text(NSLocalizedString("Widget.NoData", comment: "No data text"))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text(NSLocalizedString("Widget.OpenAppToUpdate", comment: "Open app to update text"))
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                
+                Spacer()
             }
         }
-        .padding()
-    }
-}
-
-struct SmallWidgetView_Previews: PreviewProvider {
-    static var previews: some View {
-        SmallWidgetView(entry: ExchangeRateEntry(
-            date: Date(),
-            currency: "USD",
-            rates: [
-                SharedWidgetModels.ExchangeRate(
-                    currency: "USD",
-                    bankName: "PrivatBank",
-                    buyRate: 38.5,
-                    sellRate: 39.2,
-                    timestamp: ""
-                ),
-                SharedWidgetModels.ExchangeRate(
-                    currency: "USD",
-                    bankName: "Raiffeisen",
-                    buyRate: 38.3,
-                    sellRate: 38.9,
-                    timestamp: ""
-                )
-            ],
-            bestBuyRate: SharedWidgetModels.ExchangeRate(
-                currency: "USD",
-                bankName: "Bestobmin",
-                buyRate: 38.7,
-                sellRate: 39.1,
-                timestamp: ""
-            ),
-            bestSellRate: SharedWidgetModels.ExchangeRate(
-                currency: "USD",
-                bankName: "Raiffeisen",
-                buyRate: 38.3,
-                sellRate: 38.9,
-                timestamp: ""
-            )
-        ))
-        .previewContext(WidgetPreviewContext(family: .systemSmall))
+        .padding(8)
     }
 }
 
 /// Medium widget view
-// View for medium-sized widget
 struct MediumWidgetView: View {
     /// Data for display
     let entry: ExchangeRateEntry
@@ -262,101 +172,49 @@ struct MediumWidgetView: View {
     private let sellColor = Color("SellColor")
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 4) {
             // Header with currency
             HStack {
                 Text("Курс \(entry.currency)")
                     .font(.headline)
                     .fontWeight(.bold)
+                    .lineLimit(1)
                 
                 Spacer()
                 
-                // Display update time
-                Text("\(NSLocalizedString("Widget.UpdatedAt", comment: "Updated label")) \(entry.formattedUpdateTime)")
-                    .font(.caption2)
+                // Display update time in a smaller font
+                Text("\(NSLocalizedString("Widget.UpdatedAt", comment: "Updated label"))")
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+                    + Text(" \(entry.formattedUpdateTime)")
+                    .font(.system(size: 9, weight: .medium))
                     .foregroundColor(.secondary)
             }
             
             if entry.hasData {
-                // Table with exchange rates
-                VStack(spacing: 0) {
-                    // Table header
-                    HStack {
-                        Text(NSLocalizedString("Widget.BankName", comment: "Bank column header"))
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        Text(NSLocalizedString("Widget.Buy", comment: "Buy column header"))
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .frame(width: 70, alignment: .trailing)
-                        
-                        Text(NSLocalizedString("Widget.Sell", comment: "Sell column header"))
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .frame(width: 70, alignment: .trailing)
-                    }
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .background(Color.secondary.opacity(0.1))
-                    
-                    // Bank rates - show up to 3 banks for medium widget
-                    ForEach(Array(entry.rates.prefix(3))) { rate in
-                        HStack {
-                            Text(rate.bankName)
-                                .font(.caption)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            Text(String(format: "%.2f", rate.buyRate))
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .foregroundColor(buyColor)
-                                .frame(width: 70, alignment: .trailing)
-                            
-                            Text(String(format: "%.2f", rate.sellRate))
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .foregroundColor(sellColor)
-                                .frame(width: 70, alignment: .trailing)
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        
-                        // Add divider for all rows except the last
-                        if rate.id != entry.rates.prefix(3).last?.id {
-                            Divider()
-                                .padding(.horizontal, 12)
-                        }
-                    }
-                }
-                .background(Color.secondary.opacity(0.05))
-                .cornerRadius(8)
-                
-                // Best rates
+                // Best rates in two-column layout
                 HStack(spacing: 8) {
                     // Best buy rate (highest buy rate - best to sell at)
                     if let bestBuy = entry.bestBuyRate {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(NSLocalizedString("Widget.BestToSell", comment: "Best to sell label"))
-                                .font(.caption2)
+                                .font(.system(size: 10))
                                 .foregroundColor(.secondary)
                             
                             HStack {
                                 Text(bestBuy.bankName)
-                                    .font(.caption)
+                                    .font(.system(size: 11))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
                                 
                                 Spacer()
                                 
                                 Text(String(format: "%.2f", bestBuy.buyRate))
-                                    .font(.callout)
-                                    .fontWeight(.bold)
+                                    .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(buyColor)
                             }
                         }
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 8)
+                        .padding(6)
                         .background(buyColor.opacity(0.1))
                         .cornerRadius(6)
                         .frame(maxWidth: .infinity)
@@ -366,28 +224,82 @@ struct MediumWidgetView: View {
                     if let bestSell = entry.bestSellRate {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(NSLocalizedString("Widget.BestToBuy", comment: "Best to buy label"))
-                                .font(.caption2)
+                                .font(.system(size: 10))
                                 .foregroundColor(.secondary)
                             
                             HStack {
                                 Text(bestSell.bankName)
-                                    .font(.caption)
+                                    .font(.system(size: 11))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
                                 
                                 Spacer()
                                 
                                 Text(String(format: "%.2f", bestSell.sellRate))
-                                    .font(.callout)
-                                    .fontWeight(.bold)
+                                    .font(.system(size: 13, weight: .bold))
                                     .foregroundColor(sellColor)
                             }
                         }
-                        .padding(.vertical, 4)
-                        .padding(.horizontal, 8)
+                        .padding(6)
                         .background(sellColor.opacity(0.1))
                         .cornerRadius(6)
                         .frame(maxWidth: .infinity)
                     }
                 }
+                
+                // Table with exchange rates
+                VStack(spacing: 0) {
+                    // Table header
+                    HStack {
+                        Text(NSLocalizedString("Widget.BankName", comment: "Bank column header"))
+                            .font(.system(size: 10, weight: .medium))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        Text(NSLocalizedString("Widget.Buy", comment: "Buy column header"))
+                            .font(.system(size: 10, weight: .medium))
+                            .frame(width: 60, alignment: .trailing)
+                        
+                        Text(NSLocalizedString("Widget.Sell", comment: "Sell column header"))
+                            .font(.system(size: 10, weight: .medium))
+                            .frame(width: 60, alignment: .trailing)
+                    }
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.secondary.opacity(0.1))
+                    
+                    // Bank rates - show up to 3 banks for medium widget
+                    ForEach(Array(entry.rates.prefix(3))) { rate in
+                        HStack {
+                            Text(rate.bankName)
+                                .font(.system(size: 11))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                            Text(String(format: "%.2f", rate.buyRate))
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(buyColor)
+                                .frame(width: 60, alignment: .trailing)
+                            
+                            Text(String(format: "%.2f", rate.sellRate))
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(sellColor)
+                                .frame(width: 60, alignment: .trailing)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        
+                        // Add divider for all rows except the last
+                        if rate.id != entry.rates.prefix(3).last?.id {
+                            Divider()
+                                .padding(.horizontal, 8)
+                        }
+                    }
+                }
+                .background(Color.secondary.opacity(0.05))
+                .cornerRadius(6)
+                .padding(.top, 4)
             } else {
                 // Display message if no data
                 Spacer()
@@ -403,54 +315,7 @@ struct MediumWidgetView: View {
                 Spacer()
             }
         }
-        .padding()
-    }
-}
-
-struct MediumWidgetView_Previews: PreviewProvider {
-    static var previews: some View {
-        MediumWidgetView(entry: ExchangeRateEntry(
-            date: Date(),
-            currency: "USD",
-            rates: [
-                SharedWidgetModels.ExchangeRate(
-                    currency: "USD",
-                    bankName: "PrivatBank",
-                    buyRate: 38.5,
-                    sellRate: 39.2,
-                    timestamp: ""
-                ),
-                SharedWidgetModels.ExchangeRate(
-                    currency: "USD",
-                    bankName: "Raiffeisen",
-                    buyRate: 38.3,
-                    sellRate: 38.9,
-                    timestamp: ""
-                ),
-                SharedWidgetModels.ExchangeRate(
-                    currency: "USD",
-                    bankName: "Bestobmin",
-                    buyRate: 38.7,
-                    sellRate: 39.1,
-                    timestamp: ""
-                )
-            ],
-            bestBuyRate: SharedWidgetModels.ExchangeRate(
-                currency: "USD",
-                bankName: "Bestobmin",
-                buyRate: 38.7,
-                sellRate: 39.1,
-                timestamp: ""
-            ),
-            bestSellRate: SharedWidgetModels.ExchangeRate(
-                currency: "USD",
-                bankName: "Raiffeisen",
-                buyRate: 38.3,
-                sellRate: 38.9,
-                timestamp: ""
-            )
-        ))
-        .previewContext(WidgetPreviewContext(family: .systemMedium))
+        .padding(8)
     }
 }
 
@@ -464,7 +329,7 @@ struct LargeWidgetView: View {
     private let sellColor = Color("SellColor")
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             // Header with currency
             HStack {
                 Text("Курс \(entry.currency)")
@@ -507,7 +372,7 @@ struct LargeWidgetView: View {
                     .padding()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(buyColor.opacity(0.1))
-                    .cornerRadius(12)
+                    .cornerRadius(10)
                     
                     // Best sell rate (lowest sell rate - best to buy at)
                     VStack(alignment: .leading, spacing: 4) {
@@ -534,9 +399,9 @@ struct LargeWidgetView: View {
                     .padding()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(sellColor.opacity(0.1))
-                    .cornerRadius(12)
+                    .cornerRadius(10)
                 }
-                .frame(height: 120)
+                .frame(height: 110)
                 
                 // Table with exchange rates
                 VStack(spacing: 0) {
@@ -546,21 +411,25 @@ struct LargeWidgetView: View {
                             .font(.caption)
                             .fontWeight(.medium)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .minimumScaleFactor(0.8)
                         
                         Text(NSLocalizedString("Widget.Buy", comment: "Buy column header"))
                             .font(.caption)
                             .fontWeight(.medium)
-                            .frame(width: 70, alignment: .trailing)
+                            .frame(width: 60, alignment: .trailing)
+                            .minimumScaleFactor(0.8)
                         
                         Text(NSLocalizedString("Widget.Sell", comment: "Sell column header"))
                             .font(.caption)
                             .fontWeight(.medium)
-                            .frame(width: 70, alignment: .trailing)
+                            .frame(width: 60, alignment: .trailing)
+                            .minimumScaleFactor(0.8)
                         
                         Text(NSLocalizedString("Widget.Spread", comment: "Spread column header"))
                             .font(.caption)
                             .fontWeight(.medium)
-                            .frame(width: 70, alignment: .trailing)
+                            .frame(width: 60, alignment: .trailing)
+                            .minimumScaleFactor(0.8)
                     }
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 12)
@@ -573,22 +442,26 @@ struct LargeWidgetView: View {
                             Text(rate.bankName)
                                 .font(.subheadline)
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                                .minimumScaleFactor(0.6)
                             
                             Text(String(format: "%.2f", rate.buyRate))
                                 .font(.subheadline)
                                 .foregroundColor(buyColor)
-                                .frame(width: 70, alignment: .trailing)
+                                .frame(width: 60, alignment: .trailing)
+                                .minimumScaleFactor(0.8)
                             
                             Text(String(format: "%.2f", rate.sellRate))
                                 .font(.subheadline)
                                 .foregroundColor(sellColor)
-                                .frame(width: 70, alignment: .trailing)
+                                .frame(width: 60, alignment: .trailing)
+                                .minimumScaleFactor(0.8)
                             
                             let spread = rate.sellRate - rate.buyRate
                             Text(String(format: "%.2f", spread))
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
-                                .frame(width: 70, alignment: .trailing)
+                                .frame(width: 60, alignment: .trailing)
+                                .minimumScaleFactor(0.8)
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
@@ -601,7 +474,7 @@ struct LargeWidgetView: View {
                     }
                 }
                 .background(Color.secondary.opacity(0.05))
-                .cornerRadius(12)
+                .cornerRadius(10)
                 
                 // Note
                 HStack {
@@ -610,7 +483,7 @@ struct LargeWidgetView: View {
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                 }
-                .padding(.top, 8)
+                .padding(.top, 4)
             } else {
                 // Display message if no data
                 Spacer()
@@ -634,58 +507,26 @@ struct LargeWidgetView: View {
                 Spacer()
             }
         }
-        .padding()
+        .padding(12)
     }
 }
 
-struct LargeWidgetView_Previews: PreviewProvider {
-    static var previews: some View {
-        LargeWidgetView(entry: ExchangeRateEntry(
-            date: Date(),
-            currency: "USD",
-            rates: [
-                SharedWidgetModels.ExchangeRate(
-                    currency: "USD",
-                    bankName: "PrivatBank",
-                    buyRate: 38.5,
-                    sellRate: 39.2,
-                    timestamp: ""
-                ),
-                SharedWidgetModels.ExchangeRate(
-                    currency: "USD",
-                    bankName: "Raiffeisen",
-                    buyRate: 38.3,
-                    sellRate: 38.9,
-                    timestamp: ""
-                ),
-                SharedWidgetModels.ExchangeRate(
-                    currency: "USD",
-                    bankName: "Bestobmin",
-                    buyRate: 38.7,
-                    sellRate: 39.1,
-                    timestamp: ""
-                )
-            ],
-            bestBuyRate: SharedWidgetModels.ExchangeRate(
-                currency: "USD",
-                bankName: "Bestobmin",
-                buyRate: 38.7,
-                sellRate: 39.1,
-                timestamp: ""
-            ),
-            bestSellRate: SharedWidgetModels.ExchangeRate(
-                currency: "USD",
-                bankName: "Raiffeisen",
-                buyRate: 38.3,
-                sellRate: 38.9,
-                timestamp: ""
-            )
-        ))
-        .previewContext(WidgetPreviewContext(family: .systemLarge))
+// MARK: - Custom View Modifiers
+
+/// Applies the appropriate widget background based on iOS version
+struct WidgetBackgroundModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 17.0, *) {
+            content.containerBackground(for: .widget) {
+                Color(.systemBackground)
+            }
+        } else {
+            content
+        }
     }
 }
-// Check if these are included elsewhere, if not add them here:
 
+// MARK: - Data Model
 /// Data model for the widget
 struct ExchangeRateEntry: TimelineEntry {
     /// Date when the data was updated
@@ -718,6 +559,7 @@ struct ExchangeRateEntry: TimelineEntry {
     }
 }
 
+// MARK: - Data Provider
 /// Data provider for the widget
 struct ExchangeRateProvider: TimelineProvider {
     typealias Entry = ExchangeRateEntry

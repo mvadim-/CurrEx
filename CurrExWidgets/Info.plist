@@ -7,18 +7,5 @@
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
 	</dict>
-	<key>NSAppTransportSecurity</key>
-<dict>
-    <key>NSExceptionDomains</key>
-    <dict>
-        <key>213.109.236.185</key>
-        <dict>
-            <key>NSExceptionAllowsInsecureHTTPLoads</key>
-            <true/>
-            <key>NSIncludesSubdomains</key>
-            <true/>
-        </dict>
-    </dict>
-</dict>
 </dict>
 </plist>
