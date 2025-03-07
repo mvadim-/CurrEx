@@ -9,19 +9,34 @@ import Foundation
 import SwiftUI
 import WidgetKit
 
-
 // MARK: - Main Content View Model
 final class ExchangeRateViewModel: ObservableObject {
-    // Published properties for UI updates
+    // MARK: - Published Properties
+    
+    /// Exchange rates data organized by currency
     @Published var ratesData: [CurrencyType: [BankRateViewModel]] = [:]
+    
+    /// Loading state indicator
     @Published var isLoading = true
+    
+    /// Error message to display if data loading fails
     @Published var errorMessage: String? = nil
+    
+    /// Timestamp when data was last updated in the app
     @Published var lastUpdated: String = ""
+    
+    /// Currently selected currency
     @Published var selectedCurrency: CurrencyType = .usd
+    
+    /// Timestamps from server for each currency, formatted for display
     @Published var lastUpdatedFromServer: [CurrencyType: String] = [:]
 
-    // Dependencies
+    // MARK: - Private Properties
+    
+    /// Service for fetching exchange rate data
     private let service: ExchangeRatesServiceProtocol
+    
+    /// Date formatter for consistent timestamp formatting
     private let dateFormatter: DateFormatter
     
     // MARK: - Initialization
@@ -31,19 +46,19 @@ final class ExchangeRateViewModel: ObservableObject {
     init(service: ExchangeRatesServiceProtocol = ServiceContainer.shared.exchangeRatesService) {
         self.service = service
         
-        // Initialize date formatter once
+        // Initialize date formatter once for performance
         dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .medium
         dateFormatter.timeStyle = .short
         dateFormatter.locale = Locale(identifier: "uk_UA")
         
-        // Initialize the rates data dictionary
+        // Initialize the rates data dictionary with empty arrays
         for currency in CurrencyType.allCases {
             ratesData[currency] = []
         }
     }
     
-    // MARK: - Data Loading
+    // MARK: - Data Loading Methods
     
     /// Loads exchange rate data for a specific currency
     /// - Parameter currency: Currency to load data for (defaults to selected currency)
@@ -72,35 +87,7 @@ final class ExchangeRateViewModel: ObservableObject {
         }
     }
     
-    /// Loads exchange rate data for all supported currencies
-//    func loadDataForAllCurrencies() {
-//        isLoading = true
-//        errorMessage = nil
-//        
-//        Task { @MainActor in
-//            do {
-//                for currency in CurrencyType.allCases {
-//                    let rates = try await service.fetchExchangeRates(for: currency.rawValue)
-//                    ratesData[currency] = rates
-//                    
-//                    let isoFormatter = ISO8601DateFormatter()
-//                    isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-//                    
-//                    if let rateData = rates.first, let date = isoFormatter.date(from: rateData.timestamp) {
-//                        lastUpdatedFromServer[currency] = dateFormatter.string(from: date)
-//                    }
-//                }
-//                
-//                lastUpdated = formatCurrentTime()
-//                isLoading = false
-//            } catch {
-//                handleError(error)
-//            }
-//        }
-//    }
-    
-    // Update the loadDataForAllCurrencies method in ExchangeRateViewModel.swift
-
+    /// Loads exchange rate data for all supported currencies and updates widget data
     func loadDataForAllCurrencies() {
         isLoading = true
         errorMessage = nil
@@ -109,13 +96,13 @@ final class ExchangeRateViewModel: ObservableObject {
             do {
                 var bestBuyRates: [String: WidgetExchangeRate] = [:]
                 var bestSellRates: [String: WidgetExchangeRate] = [:]
-                var allRates: [String: [WidgetExchangeRate]] = [:]  // New collection for all rates
+                var allRates: [String: [WidgetExchangeRate]] = [:]
                 
                 for currency in CurrencyType.allCases {
                     let rates = try await service.fetchExchangeRates(for: currency.rawValue)
                     ratesData[currency] = rates
                     
-                    // Find best rates
+                    // Find best rates using our view model logic
                     let bestRatesResult = findBestRates(for: currency)
                     
                     // Store all rates for the widget
@@ -160,7 +147,7 @@ final class ExchangeRateViewModel: ObservableObject {
                     }
                 }
                 
-                // Update widget data with all rates
+                // Update widget data with all rates and best rates
                 let widgetData = WidgetExchangeRateData(
                     bestBuyRates: bestBuyRates,
                     bestSellRates: bestSellRates,
@@ -211,9 +198,11 @@ final class ExchangeRateViewModel: ObservableObject {
         var bestSell = rates[0]
         
         for rate in rates {
+            // For buy rate, we want the highest value (best to sell at)
             if rate.buyRate > bestBuy.buyRate {
                 bestBuy = rate
             }
+            // For sell rate, we want the lowest value (best to buy at)
             if rate.sellRate < bestSell.sellRate {
                 bestSell = rate
             }

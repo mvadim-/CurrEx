@@ -1,4 +1,10 @@
-// Updated SharedWidgetModels.swift
+//
+//  SharedData.swift
+//  CurrEx
+//
+//  Created for CurrEx on 05.03.2025.
+//
+
 import Foundation
 
 /// Namespace for shared widget models
@@ -57,6 +63,17 @@ enum SharedDataService {
         return settings
     }
     
+    /// Save widget settings
+    /// - Parameter settings: Widget settings to save
+    static func saveWidgetSettings(_ settings: SharedWidgetModels.WidgetSettings) {
+        guard let encoded = try? JSONEncoder().encode(settings),
+              let sharedDefaults = sharedUserDefaults else {
+            return
+        }
+        
+        sharedDefaults.set(encoded, forKey: Keys.widgetSettings)
+    }
+    
     /// Get exchange rates for specific currency
     /// - Parameter currency: Currency code (e.g. "USD", "EUR")
     /// - Returns: Array of exchange rates
@@ -107,6 +124,42 @@ enum SharedDataService {
         return rates
     }
     
+    /// Get best buy rate for specific currency (directly from main app saved data)
+    /// - Parameter currency: Currency code (e.g. "USD", "EUR")
+    /// - Returns: Best exchange rate or nil if not available
+    static func getBestBuyRate(for currency: String) -> SharedWidgetModels.ExchangeRate? {
+        guard let data = WidgetDataManager.loadWidgetData(),
+              let bestBuyRate = data.bestBuyRates[currency] else {
+            return nil
+        }
+        
+        return SharedWidgetModels.ExchangeRate(
+            currency: bestBuyRate.currencyType,
+            bankName: bestBuyRate.bankName,
+            buyRate: bestBuyRate.buyRate,
+            sellRate: bestBuyRate.sellRate,
+            timestamp: bestBuyRate.timestamp
+        )
+    }
+    
+    /// Get best sell rate for specific currency (directly from main app saved data)
+    /// - Parameter currency: Currency code (e.g. "USD", "EUR")
+    /// - Returns: Best exchange rate or nil if not available
+    static func getBestSellRate(for currency: String) -> SharedWidgetModels.ExchangeRate? {
+        guard let data = WidgetDataManager.loadWidgetData(),
+              let bestSellRate = data.bestSellRates[currency] else {
+            return nil
+        }
+        
+        return SharedWidgetModels.ExchangeRate(
+            currency: bestSellRate.currencyType,
+            bankName: bestSellRate.bankName,
+            buyRate: bestSellRate.buyRate,
+            sellRate: bestSellRate.sellRate,
+            timestamp: bestSellRate.timestamp
+        )
+    }
+    
     /// Get last time data was updated
     /// - Returns: Last update date or nil if not available
     static func getLastUpdateTime() -> Date? {
@@ -155,7 +208,7 @@ enum WidgetDataManager {
 struct WidgetExchangeRateData: Codable {
     let bestBuyRates: [String: WidgetExchangeRate]
     let bestSellRates: [String: WidgetExchangeRate]
-    let allRates: [String: [WidgetExchangeRate]]  // New property to store all rates
+    let allRates: [String: [WidgetExchangeRate]]
     let lastUpdated: Date
     
     /// Empty data structure
