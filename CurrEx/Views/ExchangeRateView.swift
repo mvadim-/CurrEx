@@ -16,6 +16,7 @@ struct ExchangeRateView: View {
     
     /// Observes language changes to refresh the view
     @ObservedObject private var settingsManager = SettingsManager.shared
+    @EnvironmentObject var settingsManagerFromEnv: SettingsManager
     
     /// Initializes the view with a view model
     /// - Parameter viewModel: View model for exchange rates
@@ -67,6 +68,7 @@ struct ExchangeRateView: View {
             .sheet(isPresented: $showingHistoricalView) {
                 NavigationView {
                     HistoricalRateView(currency: viewModel.selectedCurrency)
+                        .environmentObject(settingsManager) // Pass the environment object here
                         .navigationBarItems(trailing: Button(NSLocalizedString("Close", comment: "Close button")) {
                             showingHistoricalView = false
                         })
@@ -74,6 +76,7 @@ struct ExchangeRateView: View {
             }
             .sheet(isPresented: $showingSettings) {
                 SettingsView()
+                    .environmentObject(settingsManager) // Pass the environment object here too
             }
         }
         .onAppear {

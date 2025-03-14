@@ -22,6 +22,47 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             List {
+                // MARK: - Banks Visibility Section
+                Section(header: Text(NSLocalizedString("Visible Banks", comment: "Bank visibility settings section title"))) {
+                    ForEach(settingsManager.availableBanks, id: \.self) { bank in
+                        Button(action: {
+                            settingsManager.toggleBankVisibility(bank)
+                        }) {
+                            HStack {
+                                Text(bank)
+                                    .foregroundColor(AppColors.text)
+                                
+                                Spacer()
+                                
+                                Toggle("", isOn: Binding(
+                                    get: { settingsManager.visibleBanks.contains(bank) },
+                                    set: { isOn in
+                                        if isOn {
+                                            if !settingsManager.visibleBanks.contains(bank) {
+                                                settingsManager.visibleBanks.insert(bank)
+                                            }
+                                        } else {
+                                            // Prevent hiding all banks
+                                            if settingsManager.visibleBanks.count > 1 {
+                                                settingsManager.visibleBanks.remove(bank)
+                                            }
+                                        }
+                                    }
+                                ))
+                                .labelsHidden()
+                            }
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    
+                    Button(action: {
+                        settingsManager.resetBankVisibility()
+                    }) {
+                        Text(NSLocalizedString("Show All Banks", comment: "Reset bank visibility button"))
+                            .foregroundColor(AppColors.accentColor)
+                    }
+                }
+                
                 // MARK: - Language Section
                 Section(header: Text(NSLocalizedString("Language", comment: "Language settings section title"))) {
                     ForEach(Language.allCases) { language in

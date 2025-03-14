@@ -16,6 +16,10 @@
 "English" = "English";
 "Українська" = "Українська";
 
+// MARK: - Banks
+"Visible Banks" = "Видимі банки";
+"Show All Banks" = "Показати всі банки";
+
 // MARK: - Information
 "Information" = "Інформація";
 "Version" = "Версія";

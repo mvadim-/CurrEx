@@ -16,6 +16,10 @@
 "English" = "English";
 "Українська" = "Ukrainian";
 
+// MARK: - Banks
+"Visible Banks" = "Visible Banks";
+"Show All Banks" = "Show All Banks";
+
 // MARK: - Information
 "Information" = "Information";
 "Version" = "Version";

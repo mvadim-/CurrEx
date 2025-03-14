@@ -39,6 +39,12 @@ final class ExchangeRateViewModel: ObservableObject {
     /// Date formatter for consistent timestamp formatting
     private let dateFormatter: DateFormatter
     
+    /// Settings manager for bank visibility
+    private let settingsManager = SettingsManager.shared
+    
+    /// Cancellable for notification observations
+    private var bankVisibilityObserver: NSObjectProtocol?
+    
     // MARK: - Initialization
     
     /// Initializes the view model with a service dependency
@@ -55,6 +61,23 @@ final class ExchangeRateViewModel: ObservableObject {
         // Initialize the rates data dictionary with empty arrays
         for currency in CurrencyType.allCases {
             ratesData[currency] = []
+        }
+        
+        // Observe bank visibility changes
+        bankVisibilityObserver = NotificationCenter.default.addObserver(
+            forName: Notification.Name("BankVisibilityChanged"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            // Refresh UI when bank visibility changes
+            self?.objectWillChange.send()
+        }
+    }
+    
+    deinit {
+        // Remove observer when view model is deallocated
+        if let observer = bankVisibilityObserver {
+            NotificationCenter.default.removeObserver(observer)
         }
     }
     
@@ -80,6 +103,10 @@ final class ExchangeRateViewModel: ObservableObject {
                     lastUpdatedFromServer[currencyToLoad] = dateFormatter.string(from: date)
                 }
                 
+                // Update available banks in settings manager
+                let bankNames = rates.map { $0.name }
+                settingsManager.updateAvailableBanks(bankNames)
+                
                 isLoading = false
             } catch {
                 handleError(error)
@@ -97,10 +124,14 @@ final class ExchangeRateViewModel: ObservableObject {
                 var bestBuyRates: [String: WidgetExchangeRate] = [:]
                 var bestSellRates: [String: WidgetExchangeRate] = [:]
                 var allRates: [String: [WidgetExchangeRate]] = [:]
+                var allBankNames = Set<String>()
                 
                 for currency in CurrencyType.allCases {
                     let rates = try await service.fetchExchangeRates(for: currency.rawValue)
                     ratesData[currency] = rates
+                    
+                    // Collect all bank names for settings
+                    rates.forEach { allBankNames.insert($0.name) }
                     
                     // Find best rates using our view model logic
                     let bestRatesResult = findBestRates(for: currency)
@@ -147,6 +178,9 @@ final class ExchangeRateViewModel: ObservableObject {
                     }
                 }
                 
+                // Update available banks in settings manager
+                settingsManager.updateAvailableBanks(Array(allBankNames))
+                
                 // Update widget data with all rates and best rates
                 let widgetData = WidgetExchangeRateData(
                     bestBuyRates: bestBuyRates,
@@ -192,12 +226,13 @@ final class ExchangeRateViewModel: ObservableObject {
     /// - Parameter currency: Currency to find rates for
     /// - Returns: Tuple containing best buy and sell rates
     func findBestRates(for currency: CurrencyType) -> (buy: BankRateViewModel?, sell: BankRateViewModel?) {
-        guard let rates = ratesData[currency], !rates.isEmpty else { return (nil, nil) }
+        let visibleRates = getFilteredRates(for: currency)
+        guard !visibleRates.isEmpty else { return (nil, nil) }
         
-        var bestBuy = rates[0]
-        var bestSell = rates[0]
+        var bestBuy = visibleRates[0]
+        var bestSell = visibleRates[0]
         
-        for rate in rates {
+        for rate in visibleRates {
             // For buy rate, we want the highest value (best to sell at)
             if rate.buyRate > bestBuy.buyRate {
                 bestBuy = rate
@@ -215,20 +250,21 @@ final class ExchangeRateViewModel: ObservableObject {
     /// - Parameter currency: Currency to get domain for
     /// - Returns: Closed range suitable for chart y-axis
     func getChartYDomain(for currency: CurrencyType) -> ClosedRange<Double> {
-        guard let rates = ratesData[currency], !rates.isEmpty else { return 0...50 }
+        let visibleRates = getFilteredRates(for: currency)
+        guard !visibleRates.isEmpty else { return 0...50 }
         
-        let allRates = rates.flatMap { [$0.buyRate, $0.sellRate] }
+        let allRates = visibleRates.flatMap { [$0.buyRate, $0.sellRate] }
         let minValue = (allRates.min() ?? 0) * 0.99
         let maxValue = (allRates.max() ?? 50) * 1.01
         
         return minValue...maxValue
     }
     
-    /// Gets all available rates for a given currency
+    /// Gets visible rates for a given currency based on user preferences
     /// - Parameter currency: Currency to get rates for
-    /// - Returns: Array of bank rates
+    /// - Returns: Array of bank rates filtered by visibility settings
     func getRates(for currency: CurrencyType) -> [BankRateViewModel] {
-        return ratesData[currency] ?? []
+        return getFilteredRates(for: currency)
     }
     
     /// Gets the last update time from server for a given currency
@@ -236,5 +272,16 @@ final class ExchangeRateViewModel: ObservableObject {
     /// - Returns: Formatted update time string
     func getLastUpdatedFromServer(for currency: CurrencyType) -> String {
         return lastUpdatedFromServer[currency] ?? NSLocalizedString("Not updated", comment: "")
+    }
+    
+    // MARK: - Private Helper Methods
+    
+    /// Filters rates based on user visibility preferences
+    /// - Parameter currency: Currency to filter rates for
+    /// - Returns: Filtered array of bank rates
+    private func getFilteredRates(for currency: CurrencyType) -> [BankRateViewModel] {
+        let allRates = ratesData[currency] ?? []
+        // Only return rates for banks that are visible in settings
+        return allRates.filter { settingsManager.isBankVisible($0.name) }
     }
 }

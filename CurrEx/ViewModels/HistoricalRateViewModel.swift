@@ -16,12 +16,16 @@ final class HistoricalRatesViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     @Published var selectedPeriod: PeriodType = .day1 // Changed default to 1 day
     @Published var selectedCurrency: CurrencyType = .usd
-    @Published var visibleBanks: Set<String> = ["Bestobmin", "PrivatBank", "Raiffeisen"]
+    @Published var visibleBanks: Set<String> = []
     @Published var lastUpdated: String = ""
     
     // Dependencies
     private let service: HistoricalExchangeRatesServiceProtocol
     private let dateFormatter: DateFormatter
+    private let settingsManager = SettingsManager.shared
+    
+    // Observer for bank visibility changes
+    private var bankVisibilityObserver: NSObjectProtocol?
     
     // MARK: - Initialization
     
@@ -34,6 +38,29 @@ final class HistoricalRatesViewModel: ObservableObject {
         dateFormatter.dateStyle = .medium
         dateFormatter.timeStyle = .short
         dateFormatter.locale = Locale(identifier: "uk_UA")
+        
+        // Load visible banks from settings
+        visibleBanks = settingsManager.visibleBanks
+        
+        // Observe bank visibility changes
+        bankVisibilityObserver = NotificationCenter.default.addObserver(
+            forName: Notification.Name("BankVisibilityChanged"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            // Update visible banks when settings change
+            self.visibleBanks = self.settingsManager.visibleBanks
+            // Trigger UI update
+            self.objectWillChange.send()
+        }
+    }
+    
+    deinit {
+        // Remove observer when view model is deallocated
+        if let observer = bankVisibilityObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
     
     // MARK: - Data Loading
@@ -51,8 +78,11 @@ final class HistoricalRatesViewModel: ObservableObject {
                 )
                 lastUpdated = Formatters.formatCurrentDateTime()
                 
-                // Ensure we have valid banks to display
-                updateVisibleBanks()
+                // Get all available banks from data
+                updateAvailableBanks()
+                
+                // Get visible banks from settings
+                visibleBanks = settingsManager.visibleBanks
                 
                 isLoading = false
             } catch {
@@ -74,31 +104,14 @@ final class HistoricalRatesViewModel: ObservableObject {
         isLoading = false
     }
     
-    /// Toggles visibility of a bank in the chart
-    /// - Parameter bank: Bank name to toggle
-    func toggleBank(_ bank: String) {
-        if visibleBanks.contains(bank) {
-            visibleBanks.remove(bank)
-        } else {
-            visibleBanks.insert(bank)
-        }
-    }
-    
-    /// Checks if a bank is currently visible
-    /// - Parameter bank: Bank name to check
-    /// - Returns: True if bank is visible
-    func isBankVisible(_ bank: String) -> Bool {
-        return visibleBanks.contains(bank)
-    }
-    
-    /// Updates visible banks based on available data
-    private func updateVisibleBanks() {
+    /// Updates the available banks in settings based on fetched data
+    private func updateAvailableBanks() {
         if historicalData.isEmpty {
             return
         }
         
         // Get a list of banks that actually have data
-        var availableBanks: Set<String> = []
+        var availableBanks = Set<String>()
         
         for dataPoint in historicalData {
             for (bank, _) in dataPoint.bankRates {
@@ -106,13 +119,8 @@ final class HistoricalRatesViewModel: ObservableObject {
             }
         }
         
-        // Only show banks that have data
-        visibleBanks = visibleBanks.intersection(availableBanks)
-        
-        // If all were filtered out, show all available banks
-        if visibleBanks.isEmpty {
-            visibleBanks = availableBanks
-        }
+        // Update available banks in settings manager
+        settingsManager.updateAvailableBanks(Array(availableBanks))
     }
     
     /// Gets the date range covered by historical data
@@ -165,5 +173,43 @@ final class HistoricalRatesViewModel: ObservableObject {
         let maxValue = (allValues.max() ?? 50) * 1.01
         
         return minValue...maxValue
+    }
+    
+    /// Gets filtered historical data based on visible banks
+    func getFilteredData() -> [HistoricalRateDataPoint] {
+        return historicalData
+    }
+    
+    /// Checks if a bank is available in the current data
+    /// - Parameter bank: Bank name to check
+    /// - Returns: True if bank has data available
+    func isBankAvailable(_ bank: String) -> Bool {
+        if historicalData.isEmpty {
+            return false
+        }
+        
+        return historicalData.contains { dataPoint in
+            dataPoint.bankRates.keys.contains(bank)
+        }
+    }
+    
+    /// Checks if a bank is currently visible
+    /// - Parameter bank: Bank name to check
+    /// - Returns: True if bank is visible
+    func isBankVisible(_ bank: String) -> Bool {
+        return visibleBanks.contains(bank)
+    }
+    
+    /// Toggles visibility of a bank in the chart
+    /// - Parameter bank: Bank name to toggle
+    func toggleBank(_ bank: String) {
+        if isBankVisible(bank) {
+            // Don't allow hiding the last visible bank
+            if visibleBanks.count > 1 {
+                visibleBanks.remove(bank)
+            }
+        } else {
+            visibleBanks.insert(bank)
+        }
     }
 }

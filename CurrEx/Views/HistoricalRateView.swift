@@ -11,6 +11,8 @@ import SwiftUI
 struct HistoricalRateView: View {
     @StateObject private var viewModel: HistoricalRatesViewModel
     @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var settingsManager: SettingsManager
+    
     let currency: CurrencyType
     
     /// Initializes the view with a currency type
@@ -45,6 +47,7 @@ struct HistoricalRateView: View {
                                 viewModel.toggleBank(bank)
                             }
                         )
+                        .environmentObject(settingsManager)
                         
                         if !viewModel.historicalData.isEmpty {
                             HistoricalChartView(
@@ -120,6 +123,7 @@ struct PeriodSelectorView: View {
 
 /// Bank selection legend for historical charts
 struct LegendView: View {
+    @EnvironmentObject var settingsManager: SettingsManager
     let visibleBanks: Set<String>
     let toggleAction: (String) -> Void
     
@@ -137,7 +141,7 @@ struct LegendView: View {
                 .foregroundColor(AppColors.text)
             
             VStack(alignment: .leading, spacing: 8) {
-                ForEach(["Bestobmin", "PrivatBank", "Raiffeisen"], id: \.self) { bank in
+                ForEach(settingsManager.availableBanks, id: \.self) { bank in
                     Button(action: { toggleAction(bank) }) {
                         HStack(spacing: 8) {
                             Image(systemName: visibleBanks.contains(bank) ? "checkmark.square.fill" : "square")
@@ -171,7 +175,7 @@ struct LegendView: View {
                     }
                     .buttonStyle(PlainButtonStyle())
                     
-                    if bank != "Raiffeisen" {
+                    if bank != settingsManager.availableBanks.last { // Check if last bank in list
                         Divider()
                             .background(AppColors.dividerColor)
                     }
@@ -188,5 +192,6 @@ struct LegendView: View {
 #Preview {
     NavigationView {
         HistoricalRateView(currency: .usd)
+            .environmentObject(SettingsManager.shared)
     }
 }
